@@ -1,7 +1,7 @@
 # Личный проект «Киноман» [![Build status][travis-image]][travis-url]
 
 * Студент: [Дмитрий Рыбальченко](https://up.htmlacademy.ru/ecmascript/8/user/536599).
-* Наставник: `Неизвестно`.
+* Наставник: `Михаил Еланцев`.
 
 ---
 
