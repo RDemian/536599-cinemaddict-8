@@ -9,7 +9,7 @@ export default (objFilm) => `
     <span class="film-card__genre">${objFilm.genre}</span>
     </p>
     <img src="./images/posters/${objFilm.poster}" alt="" class="film-card__poster">
-    <p class="film-card__description">${objFilm.descript}</p>
+    <p class="film-card__description">${objFilm.description}</p>
     <button class="film-card__comments">${objFilm.commentCount} comments</button>
 
     <form class="film-card__controls">
