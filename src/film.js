@@ -5,7 +5,7 @@ const getFilmCard = () => ({
   duration: ``,
   genre: ``,
   poster: ``,
-  descript: ``,
+  description: ``,
   commentCount: 0
 });
 
