@@ -204,13 +204,13 @@ class filmDetails {
 
   unbind() {
     document.querySelector(`.film-details__close-btn`)
-      .removeEventListener(`click`, this._onCloseClick());
+      .removeEventListener(`click`, this._onCloseClick);
   }
 
   unrender() {
     if (this._element) {
       this.unbind();
-      this._element.parrentNode.removeChild(this._element);
+      this._element.parentNode.removeChild(this._element);
       this._element = null;
     }
   }
