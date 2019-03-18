@@ -193,18 +193,17 @@ class filmDetails {
   }
 
   _onCloseClick(evt) {
-    /* Нужно ли нам вызывать preventDefault()? у кнопки type="button" */
     evt.preventDefault();
     return (typeof this._onDetailsClose === `function`) && this._onDetailsClose();
   }
 
   bind() {
-    document.querySelector(`.film-details__close-btn`)
+    this._element.querySelector(`.film-details__close-btn`)
       .addEventListener(`click`, this._onCloseClick);
   }
 
   unbind() {
-    document.querySelector(`.film-details__close-btn`)
+    this._element.querySelector(`.film-details__close-btn`)
       .removeEventListener(`click`, this._onCloseClick);
   }
 
@@ -216,11 +215,11 @@ class filmDetails {
     }
   }
 
-  render(container) {
+  render() {
     this.unrender();
     this._element = createDomElement(this.template);
-    container.appendChild(this._element);
     this.bind();
+    return this._element;
   }
 }
 

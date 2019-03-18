@@ -50,7 +50,6 @@ class Film {
   }
 
   _onCommentsClick(evt) {
-    /* Нужно ли нам вызывать preventDefault()? */
     evt.preventDefault();
     return (typeof this._onDetailsDisplay === `function`) && this._onDetailsDisplay();
   }
@@ -73,11 +72,11 @@ class Film {
     }
   }
 
-  render(container) {
+  render() {
     this.unrender();
     this._element = createDomElement(this.template);
-    container.appendChild(this._element);
     this.bind();
+    return this._element;
   }
 }
 

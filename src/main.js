@@ -77,12 +77,10 @@ const renderCardArray = (container, arr, count) => {
   for (let i = 0; i < count; i += 1) {
     const filmInstance = new Film(arr[i]);
     const filmDetailInstance = new FilmDetails(arr[i]);
-    filmInstance.render(container);
-    /* При Клике по комментариям выполняется функция ниже*/
-    /* Для чего нужны переопределяемые методы, можно же рендеринг попапа вызывать в обработчике клика? */
-    /* Если метод Film._onCommentsClick оформить как стрелочную функцию, можно обойтись привязки контекста .bind(), или так не делают? */
+    container.appendChild(filmInstance.render());
+    /* При Клике по комментариям выполняется функция ниже */
     filmInstance.onDetailsDisplay = () => {
-      filmDetailInstance.render(document.body);
+      document.body.appendChild(filmDetailInstance.render());
       filmDetailInstance.onDetailsClose = () => {
         filmDetailInstance.unrender();
       };
@@ -90,18 +88,18 @@ const renderCardArray = (container, arr, count) => {
   }
 };
 
-const filmList = document.querySelector(`.films-list .films-list__container`);
-const filmListExtra = document.querySelectorAll(`.films-list--extra .films-list__container`);
+const filmListContainer = document.querySelector(`.films-list .films-list__container`);
+const filmListExtraContainers = document.querySelectorAll(`.films-list--extra .films-list__container`);
 
-renderCardArray(filmList, filmArray, 8);
+renderCardArray(filmListContainer, filmArray, 8);
 
-for (let container of filmListExtra) {
+for (let container of filmListExtraContainers) {
   renderCardArray(container, filmArray, 2);
 }
 
 /* Обработчик клика по фильтрам */
 const handlerFilterClick = () => {
-  renderCardArray(filmList, filmArray, getRandomInt(1, filmArray.length));
+  renderCardArray(filmListContainer, filmArray, getRandomInt(1, filmArray.length));
 };
 
 filterContainer.addEventListener(`click`, handlerFilterClick);
