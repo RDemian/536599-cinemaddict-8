@@ -1,6 +1,6 @@
 import createFilter from './filter-create';
-import createCard from './card-create';
-import film from './film.js';
+import FilmDetails from './film-details.js';
+import Film from './film.js';
 
 /* случайное целое число в диапазоне */
 const getRandomInt = (min, max) => {
@@ -18,29 +18,29 @@ filterContainer.insertAdjacentHTML(`beforeend`, createFilter(`Favorites`, getRan
 const createFilmArray = (count) => {
   const filmArray = [];
   for (let i = 0; i < count; i += 1) {
-    const objFilm = film();
-    objFilm.title = [
+    const dataObj = {};
+    dataObj.title = [
       `Accused`,
       `Blackmail`,
       `Blue blazers`,
       `Fuga da New-york`,
       `Moonrise`,
       `Three friends`][Math.floor(Math.random() * 6)];
-    objFilm.rating = getRandomInt(1, 9) + getRandomInt(1, 9) / 10;
-    objFilm.year = [
+    dataObj.rating = getRandomInt(1, 9) + getRandomInt(1, 9) / 10;
+    dataObj.year = [
       `2016`,
       `2017`,
       `2018`][Math.floor(Math.random() * 3)];
-    objFilm.duration = `1h&nbsp;${getRandomInt(1, 59)}m`;
-    objFilm.genre = `Comedy`;
-    objFilm.poster = `${[
+    dataObj.duration = `1h&nbsp;${getRandomInt(1, 59)}m`;
+    dataObj.genre = [`Comedy`, `Action`, `Adventure`];
+    dataObj.poster = `${[
       `accused`,
       `blackmail`,
       `blue-blazes`,
       `fuga-da-new-york`,
       `moonrise`,
       `three-friends`][Math.floor(Math.random() * 6)]}.jpg`;
-    objFilm.description = [
+    dataObj.description = [
       `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras aliquet varius magna, non porta ligula feugiat eget.`,
       `Fusce tristique felis at fermentum pharetra. Aliquam id orci ut lectus varius viverra.`,
       `Nullam nunc ex, convallis sed finibus eget, sollicitudin eget ante.`,
@@ -51,9 +51,18 @@ const createFilmArray = (count) => {
       `Nunc fermentum tortor ac porta dapibus.`,
       `In rutrum ac purus sit amet tempus.`
     ].filter(() => [true, false][Math.floor(Math.random() * 2)]).slice(0, getRandomInt(1, 3));
-    objFilm.commentCount = getRandomInt(1, 20);
+    dataObj.commentCount = getRandomInt(1, 20);
+    dataObj.age = getRandomInt(0, 18);
+    dataObj.original = [
+      `Обвиняемый`,
+      `Черное письмо`,
+      `Голубые пиджаки`,
+      `Фуга Нью-Йорк`,
+      `Восход луны`,
+      `Три друга`][Math.floor(Math.random() * 6)];
+    dataObj.selfRating = getRandomInt(1, 9) + getRandomInt(1, 9) / 10;
 
-    filmArray.push(createCard(objFilm));
+    filmArray.push(dataObj);
   }
   return filmArray;
 };
@@ -63,27 +72,34 @@ const filmArray = createFilmArray(12);
 /* выводим карточки в контейнер */
 const renderCardArray = (container, arr, count) => {
   if (arr.length < count) {
-    count = films.length;
+    count = arr.length;
   }
-  let films = arr.slice(0, arr.length);
-  container.innerHTML = ``;
   for (let i = 0; i < count; i += 1) {
-    container.insertAdjacentHTML(`beforeend`, films.splice(getRandomInt(0, films.length - 1), 1));
+    const filmInstance = new Film(arr[i]);
+    const filmDetailInstance = new FilmDetails(arr[i]);
+    container.appendChild(filmInstance.render());
+    /* При Клике по комментариям выполняется функция ниже */
+    filmInstance.onDetailsDisplay = () => {
+      document.body.appendChild(filmDetailInstance.render());
+      filmDetailInstance.onDetailsClose = () => {
+        filmDetailInstance.unrender();
+      };
+    };
   }
 };
 
-const filmList = document.querySelector(`.films-list .films-list__container`);
-const filmListExtra = document.querySelectorAll(`.films-list--extra .films-list__container`);
+const filmListContainer = document.querySelector(`.films-list .films-list__container`);
+const filmListExtraContainers = document.querySelectorAll(`.films-list--extra .films-list__container`);
 
-renderCardArray(filmList, filmArray, 9);
+renderCardArray(filmListContainer, filmArray, 8);
 
-for (let container of filmListExtra) {
+for (let container of filmListExtraContainers) {
   renderCardArray(container, filmArray, 2);
 }
 
 /* Обработчик клика по фильтрам */
 const handlerFilterClick = () => {
-  renderCardArray(filmList, filmArray, getRandomInt(1, filmArray.length));
+  renderCardArray(filmListContainer, filmArray, getRandomInt(1, filmArray.length));
 };
 
 filterContainer.addEventListener(`click`, handlerFilterClick);
