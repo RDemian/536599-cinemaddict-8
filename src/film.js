@@ -13,6 +13,7 @@ class Film {
 
     this._element = null;
     this._onDetailsDisplay = null;
+    this._onCommentsClick = this._onCommentsClick.bind(this);
   }
 
   get template() {
@@ -56,12 +57,12 @@ class Film {
 
   bind() {
     this._element.querySelector(`.film-card__comments`)
-        .addEventListener(`click`, this._onCommentsClick.bind(this));
+        .addEventListener(`click`, this._onCommentsClick);
   }
 
   unbind() {
     this._element.querySelector(`.film-card__comments`)
-        .removeEventListeners(this._onCommentsClick);
+        .removeEventListener(`click`, this._onCommentsClick);
   }
 
   unrender() {

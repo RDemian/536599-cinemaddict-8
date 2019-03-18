@@ -17,6 +17,7 @@ class filmDetails {
 
     this._element = null;
     this._onDetailsClose = null;
+    this._onCloseClick = this._onCloseClick.bind(this);
   }
 
   get template() {
@@ -199,7 +200,7 @@ class filmDetails {
 
   bind() {
     document.querySelector(`.film-details__close-btn`)
-      .addEventListener(`click`, this._onCloseClick.bind(this));
+      .addEventListener(`click`, this._onCloseClick);
   }
 
   unbind() {
