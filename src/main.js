@@ -71,6 +71,7 @@ const filmArray = createFilmArray(12);
 
 /* выводим карточки в контейнер */
 const renderCardArray = (container, arr, count) => {
+  container.innerHTML = ``;
   if (arr.length < count) {
     count = arr.length;
   }
@@ -82,6 +83,7 @@ const renderCardArray = (container, arr, count) => {
     filmInstance.onDetailsDisplay = () => {
       document.body.appendChild(filmDetailInstance.render());
       filmDetailInstance.onDetailsClose = () => {
+        document.body.removeChild(filmDetailInstance.element);
         filmDetailInstance.unrender();
       };
     };
