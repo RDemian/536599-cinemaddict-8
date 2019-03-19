@@ -1,7 +1,8 @@
-import createDomElement from './create-dom-element.js';
+import Component from './component.js';
 
-class filmDetails {
+class filmDetails extends Component {
   constructor(data) {
+    super();
     this._title = data.title;
     this._rating = data.rating;
     this._year = data.year;
@@ -15,7 +16,6 @@ class filmDetails {
     this._original = data.original;
     this._selfRating = data.selfRating;
 
-    this._element = null;
     this._onDetailsClose = null;
     this._onCloseClick = this._onCloseClick.bind(this);
   }
@@ -205,21 +205,6 @@ class filmDetails {
   unbind() {
     this._element.querySelector(`.film-details__close-btn`)
       .removeEventListener(`click`, this._onCloseClick);
-  }
-
-  unrender() {
-    if (this._element) {
-      this.unbind();
-      this._element.parentNode.removeChild(this._element);
-      this._element = null;
-    }
-  }
-
-  render() {
-    this.unrender();
-    this._element = createDomElement(this.template);
-    this.bind();
-    return this._element;
   }
 }
 

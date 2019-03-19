@@ -1,7 +1,8 @@
-import createDomElement from './create-dom-element.js';
+import Component from './component.js';
 
-class Film {
+class Film extends Component {
   constructor(data) {
+    super();
     this._title = data.title;
     this._rating = data.rating;
     this._year = data.year;
@@ -11,7 +12,6 @@ class Film {
     this._description = data.description;
     this._commentCount = data.commentCount;
 
-    this._element = null;
     this._onDetailsDisplay = null;
     this._onCommentsClick = this._onCommentsClick.bind(this);
   }
@@ -40,11 +40,6 @@ class Film {
   `.trim();
   }
 
-  unrender() {
-    this.unbind();
-    this._element = null;
-  }
-
   set onDetailsDisplay(fn) {
     this._onDetailsDisplay = fn;
   }
@@ -62,21 +57,6 @@ class Film {
   unbind() {
     this._element.querySelector(`.film-card__comments`)
         .removeEventListener(`click`, this._onCommentsClick);
-  }
-
-  unrender() {
-    if (this._element) {
-      this.unbind();
-      this._element.parentNode.removeChild(this._element);
-      this._element = null;
-    }
-  }
-
-  render() {
-    this.unrender();
-    this._element = createDomElement(this.template);
-    this.bind();
-    return this._element;
   }
 }
 
