@@ -1,3 +1,4 @@
+import createDomElement from './create-dom-element';
 import Component from './component.js';
 
 class filmDetails extends Component {
@@ -10,14 +11,17 @@ class filmDetails extends Component {
     this._genre = data.genre;
     this._poster = data.poster;
     this._description = data.description;
-    this._commentCount = data.commentCount;
+    this._comments = Array.from(data.comments);
 
     this._age = data.age;
     this._original = data.original;
-    this._selfRating = data.selfRating;
+    this._score = data.score;
 
     this._onDetailsClose = null;
     this._onCloseClick = this._onCloseClick.bind(this);
+
+    this._onCommentAdd = null;
+    this._onCommentKeyDown = this._onCommentKeyDown.bind(this);
   }
 
   get template() {
@@ -98,19 +102,20 @@ class filmDetails extends Component {
         </section>
 
         <section class="film-details__comments-wrap">
-          <h3 class="film-details__comments-title">Comments <span class="film-details__comments-count">${this._commentCount}</span></h3>
+          <h3 class="film-details__comments-title">Comments <span class="film-details__comments-count">${this._comments.length}</span></h3>
 
           <ul class="film-details__comments-list">
+            ${this._comments.map((el) => `
             <li class="film-details__comment">
-              <span class="film-details__comment-emoji">😴</span>
+              <span class="film-details__comment-emoji">${ {sleeping: `☹`, neutralface: `😐`, grinning: `☺`}[el.emoji.replace(`-`, ``)] }</span>
               <div>
-                <p class="film-details__comment-text">So long-long story, boring!</p>
+                <p class="film-details__comment-text">${el.text}</p>
                 <p class="film-details__comment-info">
-                  <span class="film-details__comment-author">Tim Macoveev</span>
-                  <span class="film-details__comment-day">3 days ago</span>
+                  <span class="film-details__comment-author">${el.auth}</span>
+                  <span class="film-details__comment-day">${el.date}</span>
                 </p>
               </div>
-            </li>
+            </li>`).join(` `)}
           </ul>
 
           <div class="film-details__new-comment">
@@ -120,17 +125,17 @@ class filmDetails extends Component {
 
               <div class="film-details__emoji-list">
                 <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-sleeping" value="sleeping">
-                <label class="film-details__emoji-label" for="emoji-sleeping">😴</label>
+                <label class="film-details__emoji-label" for="emoji-sleeping">☹</label>
 
                 <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-neutral-face" value="neutral-face" checked>
                 <label class="film-details__emoji-label" for="emoji-neutral-face">😐</label>
 
                 <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-grinning" value="grinning">
-                <label class="film-details__emoji-label" for="emoji-grinning">😀</label>
+                <label class="film-details__emoji-label" for="emoji-grinning">☺</label>
               </div>
             </div>
             <label class="film-details__comment-label">
-              <textarea class="film-details__comment-input" placeholder="← Select reaction, add comment here" name="comment"></textarea>
+              <textarea class="film-details__comment-input" placeholder="← Select reaction, add comment here (ctrl + enter)" name="comment"></textarea>
             </label>
           </div>
         </section>
@@ -152,33 +157,8 @@ class filmDetails extends Component {
               <p class="film-details__user-rating-feelings">How you feel it?</p>
 
               <div class="film-details__user-rating-score">
-                <input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="1" id="rating-1">
-                <label class="film-details__user-rating-label" for="rating-1">1</label>
-
-                <input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="2" id="rating-2">
-                <label class="film-details__user-rating-label" for="rating-2">2</label>
-
-                <input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="3" id="rating-3">
-                <label class="film-details__user-rating-label" for="rating-3">3</label>
-
-                <input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="4" id="rating-4">
-                <label class="film-details__user-rating-label" for="rating-4">4</label>
-
-                <input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="5" id="rating-5" checked>
-                <label class="film-details__user-rating-label" for="rating-5">5</label>
-
-                <input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="6" id="rating-6">
-                <label class="film-details__user-rating-label" for="rating-6">6</label>
-
-                <input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="7" id="rating-7">
-                <label class="film-details__user-rating-label" for="rating-7">7</label>
-
-                <input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="8" id="rating-8">
-                <label class="film-details__user-rating-label" for="rating-8">8</label>
-
-                <input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="9" id="rating-9">
-                <label class="film-details__user-rating-label" for="rating-9">9</label>
-
+                ${ new Array(9).fill().map((el, ind) => `<input type="radio" name="score" class="film-details__user-rating-input visually-hidden" ${this._score === ind + 1 ? `checked` : ``} value="${ind + 1}" id="rating-${ind + 1}">
+                          <label class="film-details__user-rating-label" for="rating-${ind + 1}">${ind + 1}</label>`).join(` `) }
               </div>
             </section>
           </div>
@@ -192,6 +172,58 @@ class filmDetails extends Component {
     this._onDetailsClose = fn;
   }
 
+  set onCommentAdd(fn) {
+    this._onCommentAdd = fn;
+  }
+
+  static convertData(formData) {
+    const entryObj = {
+      emoji: ``,
+      text: ``,
+      auth: `добавлен мной`,
+      date: `1 days ago`,
+    };
+    const mapper = {
+      commentemoji: (value) => {
+        entryObj.emoji = value;
+      },
+      comment: (value) => {
+        entryObj.text = value;
+      },
+      score: () => {},
+    };
+    for (const pair of formData.entries()) {
+      console.log(pair);
+      const [property, value] = pair;
+      if (mapper[property.replace(`-`, ``)]) {
+        mapper[property.replace(`-`, ``)](value);
+      }
+    }
+    return entryObj;
+  }
+
+  _commentsUpdate() {
+    let domElement = createDomElement(this.template);
+    domElement = domElement.querySelector(`.film-details__comments-list .film-details__comment:last-of-type`);
+    this._element.querySelector(`.film-details__comments-list`).appendChild(domElement);
+    this._element.querySelector(`.film-details__comments-count`).textContent = this._comments.length;
+  }
+
+  _onCommentKeyDown(evt) {
+    if (evt.keyCode === 13 && evt.ctrlKey) {
+      evt.preventDefault();
+      let formData = new FormData(this._element.querySelector(`.film-details__inner`));
+      let newComment = filmDetails.convertData(formData);
+      this._comments.push(newComment);
+      if (newComment.text === ``) {
+        return false;
+      }
+      this._commentsUpdate();
+      return (typeof this._onCommentAdd === `function`) && this._onCommentAdd(newComment);
+    }
+    return false;
+  }
+
   _onCloseClick(evt) {
     evt.preventDefault();
     return (typeof this._onDetailsClose === `function`) && this._onDetailsClose();
@@ -200,11 +232,15 @@ class filmDetails extends Component {
   bind() {
     this._element.querySelector(`.film-details__close-btn`)
       .addEventListener(`click`, this._onCloseClick);
+    this._element.querySelector(`.film-details__comment-input`)
+      .addEventListener(`keydown`, this._onCommentKeyDown);
   }
 
   unbind() {
     this._element.querySelector(`.film-details__close-btn`)
       .removeEventListener(`click`, this._onCloseClick);
+    this._element.querySelector(`.film-details__comment-input`)
+      .removeEventListener(`keydown`, this._onCommentKeyDown);
   }
 }
 

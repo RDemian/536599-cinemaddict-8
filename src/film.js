@@ -10,7 +10,7 @@ class Film extends Component {
     this._genre = data.genre;
     this._poster = data.poster;
     this._description = data.description;
-    this._commentCount = data.commentCount;
+    this._comments = data.comments;
 
     this._onDetailsDisplay = null;
     this._onCommentsClick = this._onCommentsClick.bind(this);
@@ -29,7 +29,7 @@ class Film extends Component {
     </p>
     <img src="./images/posters/${this._poster}" alt="" class="film-card__poster">
     <p class="film-card__description">${this._description}</p>
-    <button class="film-card__comments">${this._commentCount} comments</button>
+    <button class="film-card__comments">${this._comments.length} comments</button>
 
     <form class="film-card__controls">
       <button class="film-card__controls-item button film-card__controls-item--add-to-watchlist"><!--Add to watchlist--> WL</button>
