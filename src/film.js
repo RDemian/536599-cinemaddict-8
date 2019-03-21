@@ -1,7 +1,7 @@
 import createDomElement from './create-dom-element';
 import Component from './component.js';
-const moment = require(`moment`);
-require(`moment-duration-format`);
+import moment from 'moment';
+import 'moment-duration-format';
 moment.locale(`ru`);
 class Film extends Component {
   constructor(data) {

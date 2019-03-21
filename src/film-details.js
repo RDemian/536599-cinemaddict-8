@@ -1,9 +1,10 @@
 import createDomElement from './create-dom-element';
 import Component from './component.js';
-const moment = require(`moment`);
-require(`moment-duration-format`);
+import moment from 'moment';
+import 'moment-duration-format';
 moment.locale(`ru`);
 
+const keyEnterKod = 13;
 class filmDetails extends Component {
   constructor(data) {
     super();
@@ -28,6 +29,8 @@ class filmDetails extends Component {
 
     this._onScoreChange = null;
     this._onScoreClick = this._onScoreClick.bind(this);
+
+    this._onEmojiClick = this._onEmojiClick.bind(this);
   }
 
   get template() {
@@ -53,7 +56,7 @@ class filmDetails extends Component {
 
               <div class="film-details__rating">
                 <p class="film-details__total-rating">${this._rating}</p>
-                <p class="film-details__user-rating">Your rate ${this._selfRating}</p>
+                <p class="film-details__user-rating">Your rate ${this._score}</p>
               </div>
             </div>
 
@@ -113,7 +116,7 @@ class filmDetails extends Component {
           <ul class="film-details__comments-list">
             ${this._comments.map((el) => `
             <li class="film-details__comment">
-              <span class="film-details__comment-emoji">${ {sleeping: `☹`, neutralface: `😐`, grinning: `☺`}[el.emoji.replace(`-`, ``)] }</span>
+              <span class="film-details__comment-emoji">${ {sleeping: `😴`, neutralface: `😐`, grinning: `😀`}[el.emoji.replace(`-`, ``)] }</span>
               <div>
                 <p class="film-details__comment-text">${el.text}</p>
                 <p class="film-details__comment-info">
@@ -131,13 +134,13 @@ class filmDetails extends Component {
 
               <div class="film-details__emoji-list">
                 <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-sleeping" value="sleeping">
-                <label class="film-details__emoji-label" for="emoji-sleeping">☹</label>
+                <label class="film-details__emoji-label" for="emoji-sleeping">😴</label>
 
                 <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-neutral-face" value="neutral-face" checked>
                 <label class="film-details__emoji-label" for="emoji-neutral-face">😐</label>
 
                 <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-grinning" value="grinning">
-                <label class="film-details__emoji-label" for="emoji-grinning">☺</label>
+                <label class="film-details__emoji-label" for="emoji-grinning">😀</label>
               </div>
             </div>
             <label class="film-details__comment-label">
@@ -223,10 +226,11 @@ class filmDetails extends Component {
   }
 
   _onCommentKeyDown(evt) {
-    if (evt.keyCode === 13 && evt.ctrlKey) {
+    if (evt.keyCode === keyEnterKod && evt.ctrlKey) {
       evt.preventDefault();
       let formData = new FormData(this._element.querySelector(`.film-details__inner`));
       this._element.querySelector(`.film-details__comment-input`).value = ``;
+      this._element.querySelector(`.film-details__add-emoji-label`).textContent = `😐`;
       let newComment = filmDetails.convertCommentData(formData);
       this._comments.push(newComment);
       if (newComment.text === ``) {
@@ -250,6 +254,7 @@ class filmDetails extends Component {
         this._score = value;
         this._rating = this._rating > value ? Math.round((this._rating - value / 10) * 10) / 10 : Math.round((this._rating + value / 10) * 10) / 10;
         this._element.querySelector(`.film-details__total-rating`).textContent = this._rating;
+        this._element.querySelector(`.film-details__user-rating`).textContent = `Your rate ${this._score}`;
         let newData = {
           score: this._score,
           rating: this._rating,
@@ -260,6 +265,11 @@ class filmDetails extends Component {
     return false;
   }
 
+  /* Выбор эмодзи */
+  _onEmojiClick(el) {
+    this._element.querySelector(`.film-details__add-emoji-label`).textContent = el.target.textContent;
+  }
+
   bind() {
     this._element.querySelector(`.film-details__close-btn`)
       .addEventListener(`click`, this._onCloseClick);
@@ -267,6 +277,9 @@ class filmDetails extends Component {
       .addEventListener(`keydown`, this._onCommentKeyDown);
     this._element.querySelectorAll(`.film-details__user-rating-input`).forEach((el) => {
       el.addEventListener(`click`, this._onScoreClick);
+    });
+    this._element.querySelectorAll(`.film-details__emoji-label`).forEach((el) => {
+      el.addEventListener(`click`, this._onEmojiClick);
     });
   }
 
@@ -277,6 +290,9 @@ class filmDetails extends Component {
       .removeEventListener(`keydown`, this._onCommentKeyDown);
     this._element.querySelectorAll(`.film-details__user-rating-input`).forEach((el) => {
       el.removeEventListener(`click`, this._onScoreClick);
+    });
+    this._element.querySelectorAll(`.film-details__emoji-label`).forEach((el) => {
+      el.removeEventListener(`click`, this._onEmojiClick);
     });
   }
 }
