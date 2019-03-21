@@ -1,5 +1,8 @@
 import createDomElement from './create-dom-element';
 import Component from './component.js';
+const moment = require(`moment`);
+require(`moment-duration-format`);
+moment.locale(`ru`);
 
 class filmDetails extends Component {
   constructor(data) {
@@ -69,11 +72,11 @@ class filmDetails extends Component {
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Release Date</td>
-                <td class="film-details__cell">15 June 2018 (USA)</td>
+                <td class="film-details__cell">${moment(this._year).format(`DD MMMM YYYY`)} (USA)</td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Runtime</td>
-                <td class="film-details__cell">118 min</td>
+                <td class="film-details__cell"> ${moment.duration(this._duration, `minutes`).format(`mm [мин]`)} </td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Country</td>
@@ -115,7 +118,7 @@ class filmDetails extends Component {
                 <p class="film-details__comment-text">${el.text}</p>
                 <p class="film-details__comment-info">
                   <span class="film-details__comment-author">${el.auth}</span>
-                  <span class="film-details__comment-day">${el.date}</span>
+                  <span class="film-details__comment-day">${moment(el.date).fromNow()}</span>
                 </p>
               </div>
             </li>`).join(` `)}
@@ -191,8 +194,9 @@ class filmDetails extends Component {
       emoji: ``,
       text: ``,
       auth: `добавлен мной`,
-      date: `1 days ago`,
+      date: new Date(),
     };
+
     const mapper = {
       commentemoji: (value) => {
         entryObj.emoji = value;
@@ -222,6 +226,7 @@ class filmDetails extends Component {
     if (evt.keyCode === 13 && evt.ctrlKey) {
       evt.preventDefault();
       let formData = new FormData(this._element.querySelector(`.film-details__inner`));
+      this._element.querySelector(`.film-details__comment-input`).value = ``;
       let newComment = filmDetails.convertCommentData(formData);
       this._comments.push(newComment);
       if (newComment.text === ``) {

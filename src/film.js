@@ -1,6 +1,8 @@
 import createDomElement from './create-dom-element';
 import Component from './component.js';
-
+const moment = require(`moment`);
+require(`moment-duration-format`);
+moment.locale(`ru`);
 class Film extends Component {
   constructor(data) {
     super();
@@ -23,8 +25,8 @@ class Film extends Component {
     <h3 class="film-card__title">${this._title}</h3>
     <p class="film-card__rating">${this._rating}</p>
     <p class="film-card__info">
-    <span class="film-card__year">${this._year}</span>
-    <span class="film-card__duration">${this._duration}</span>
+    <span class="film-card__year">${moment(this._year).format(`YYYY`)}</span>
+    <span class="film-card__duration">${moment.duration(this._duration, `minutes`).format(`h [час] mm [мин]`)}</span>
     </br>
     ${this._genre.map((el) => `<span class="film-details__genre">${el}</span>`).join(` `)}
     </p>

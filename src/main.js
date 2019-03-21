@@ -33,7 +33,7 @@ const getObjComment = () => {
       `Ваня`,
       `Петя`,
       `Федя`][Math.floor(Math.random() * 3)],
-    date: `3 days ago`,
+    date: new Date(2005, 11, 12),
   };
 };
 
@@ -50,11 +50,11 @@ const createFilmArray = (count) => {
       `Three friends`][Math.floor(Math.random() * 6)];
     dataObj.rating = getRandomInt(1, 9) + getRandomInt(1, 9) / 10;
     dataObj.score = getRandomInt(1, 9);
-    dataObj.year = [
-      `2016`,
-      `2017`,
-      `2018`][Math.floor(Math.random() * 3)];
-    dataObj.duration = `1h&nbsp;${getRandomInt(1, 59)}m`;
+    dataObj.year = new Date([
+      2016,
+      2017,
+      2018][Math.floor(Math.random() * 3)], getRandomInt(0, 11), getRandomInt(0, 28));
+    dataObj.duration = getRandomInt(60, 110);
     dataObj.genre = [`Comedy`, `Action`, `Adventure`];
     dataObj.poster = `${[
       `accused`,
@@ -111,6 +111,7 @@ const renderCardArray = (container, arr, count) => {
       };
       filmDetailInstance.onCommentAdd = (newComment) => {
         currentData.comments.push(newComment);
+        filmInstance.update(currentData);
       };
       filmDetailInstance.onScoreChange = (newData) => {
         currentData.score = newData.score;
