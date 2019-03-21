@@ -15,6 +15,28 @@ filterContainer.insertAdjacentHTML(`beforeend`, createFilter(`History`, getRando
 filterContainer.insertAdjacentHTML(`beforeend`, createFilter(`Favorites`, getRandomInt(1, 13)));
 
 /* Генерация массива карточек filmArray */
+const getObjComment = () => {
+  return {
+    emoji: [`sleeping`, `neutral-face`, `grinning`][Math.floor(Math.random() * 3)],
+    text: [
+      `Cras aliquet varius magna, non porta ligula feugiat eget.`,
+      `Fusce tristique felis at fermentum pharetra.`,
+      `Nullam nunc ex, convallis sed finibus eget, sollicitudin eget ante.`,
+      `Phasellus eros mauris, condimentum sed nibh vitae, sodales efficitur ipsum.`,
+      `Sed blandit, eros vel aliquam faucibus, purus ex euismod diam, eu luctus nunc ante ut dui.`,
+      `Sed sed nisi sed augue convallis suscipit in sed felis.`,
+      `Aliquam erat volutpat.`,
+      `Nunc fermentum tortor ac porta dapibus.`,
+      `In rutrum ac purus sit amet tempus.`
+    ].filter(() => [true, false][Math.floor(Math.random() * 2)]).slice(0, getRandomInt(1, 2)).join(` `),
+    auth: [
+      `Ваня`,
+      `Петя`,
+      `Федя`][Math.floor(Math.random() * 3)],
+    date: new Date(2005, 11, 12),
+  };
+};
+
 const createFilmArray = (count) => {
   const filmArray = [];
   for (let i = 0; i < count; i += 1) {
@@ -27,11 +49,12 @@ const createFilmArray = (count) => {
       `Moonrise`,
       `Three friends`][Math.floor(Math.random() * 6)];
     dataObj.rating = getRandomInt(1, 9) + getRandomInt(1, 9) / 10;
-    dataObj.year = [
-      `2016`,
-      `2017`,
-      `2018`][Math.floor(Math.random() * 3)];
-    dataObj.duration = `1h&nbsp;${getRandomInt(1, 59)}m`;
+    dataObj.score = getRandomInt(1, 9);
+    dataObj.year = new Date([
+      2016,
+      2017,
+      2018][Math.floor(Math.random() * 3)], getRandomInt(0, 11), getRandomInt(0, 28));
+    dataObj.duration = getRandomInt(60, 110);
     dataObj.genre = [`Comedy`, `Action`, `Adventure`];
     dataObj.poster = `${[
       `accused`,
@@ -51,7 +74,7 @@ const createFilmArray = (count) => {
       `Nunc fermentum tortor ac porta dapibus.`,
       `In rutrum ac purus sit amet tempus.`
     ].filter(() => [true, false][Math.floor(Math.random() * 2)]).slice(0, getRandomInt(1, 3));
-    dataObj.commentCount = getRandomInt(1, 20);
+    dataObj.comments = new Array(getRandomInt(1, 3)).fill().map(() => getObjComment());
     dataObj.age = getRandomInt(0, 18);
     dataObj.original = [
       `Обвиняемый`,
@@ -60,7 +83,6 @@ const createFilmArray = (count) => {
       `Фуга Нью-Йорк`,
       `Восход луны`,
       `Три друга`][Math.floor(Math.random() * 6)];
-    dataObj.selfRating = getRandomInt(1, 9) + getRandomInt(1, 9) / 10;
 
     filmArray.push(dataObj);
   }
@@ -76,8 +98,9 @@ const renderCardArray = (container, arr, count) => {
     count = arr.length;
   }
   for (let i = 0; i < count; i += 1) {
-    const filmInstance = new Film(arr[i]);
-    const filmDetailInstance = new FilmDetails(arr[i]);
+    const currentData = arr[i];
+    const filmInstance = new Film(currentData);
+    const filmDetailInstance = new FilmDetails(currentData);
     container.appendChild(filmInstance.render());
     /* При Клике по комментариям выполняется функция ниже */
     filmInstance.onDetailsDisplay = () => {
@@ -85,6 +108,15 @@ const renderCardArray = (container, arr, count) => {
       filmDetailInstance.onDetailsClose = () => {
         document.body.removeChild(filmDetailInstance.element);
         filmDetailInstance.unrender();
+      };
+      filmDetailInstance.onCommentAdd = (newComment) => {
+        currentData.comments.push(newComment);
+        filmInstance.update(currentData);
+      };
+      filmDetailInstance.onScoreChange = (newData) => {
+        currentData.score = newData.score;
+        currentData.rating = newData.rating;
+        filmInstance.update(currentData);
       };
     };
   }
