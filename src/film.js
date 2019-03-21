@@ -1,3 +1,4 @@
+import createDomElement from './create-dom-element';
 import Component from './component.js';
 
 class Film extends Component {
@@ -10,7 +11,7 @@ class Film extends Component {
     this._genre = data.genre;
     this._poster = data.poster;
     this._description = data.description;
-    this._comments = data.comments;
+    this._comments = Array.from(data.comments);
 
     this._onDetailsDisplay = null;
     this._onCommentsClick = this._onCommentsClick.bind(this);
@@ -57,6 +58,22 @@ class Film extends Component {
   unbind() {
     this._element.querySelector(`.film-card__comments`)
         .removeEventListener(`click`, this._onCommentsClick);
+  }
+
+  update(data) {
+    this._title = data.title;
+    this._rating = data.rating;
+    this._year = data.year;
+    this._duration = data.duration;
+    this._genre = data.genre;
+    this._poster = data.poster;
+    this._description = data.description;
+    this._comments = Array.from(data.comments);
+    let container = this._element.parentElement;
+    let newElement = createDomElement(this.template);
+    container.replaceChild(newElement, this._element);
+    this._element = newElement;
+    this.bind();
   }
 }
 

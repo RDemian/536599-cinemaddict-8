@@ -22,6 +22,9 @@ class filmDetails extends Component {
 
     this._onCommentAdd = null;
     this._onCommentKeyDown = this._onCommentKeyDown.bind(this);
+
+    this._onScoreChange = null;
+    this._onScoreClick = this._onScoreClick.bind(this);
   }
 
   get template() {
@@ -157,7 +160,7 @@ class filmDetails extends Component {
               <p class="film-details__user-rating-feelings">How you feel it?</p>
 
               <div class="film-details__user-rating-score">
-                ${ new Array(9).fill().map((el, ind) => `<input type="radio" name="score" class="film-details__user-rating-input visually-hidden" ${this._score === ind + 1 ? `checked` : ``} value="${ind + 1}" id="rating-${ind + 1}">
+                ${ new Array(9).fill().map((el, ind) => `<input type="radio" name="score" class="film-details__user-rating-input visually-hidden" ${+this._score === ind + 1 ? `checked` : ``} value="${ind + 1}" id="rating-${ind + 1}">
                           <label class="film-details__user-rating-label" for="rating-${ind + 1}">${ind + 1}</label>`).join(` `) }
               </div>
             </section>
@@ -168,15 +171,22 @@ class filmDetails extends Component {
     `.trim();
   }
 
+  /* Закрытие попапа */
   set onDetailsClose(fn) {
     this._onDetailsClose = fn;
   }
 
+  _onCloseClick(evt) {
+    evt.preventDefault();
+    return (typeof this._onDetailsClose === `function`) && this._onDetailsClose();
+  }
+
+  /* Добавление комментариев */
   set onCommentAdd(fn) {
     this._onCommentAdd = fn;
   }
 
-  static convertData(formData) {
+  static convertCommentData(formData) {
     const entryObj = {
       emoji: ``,
       text: ``,
@@ -193,7 +203,6 @@ class filmDetails extends Component {
       score: () => {},
     };
     for (const pair of formData.entries()) {
-      console.log(pair);
       const [property, value] = pair;
       if (mapper[property.replace(`-`, ``)]) {
         mapper[property.replace(`-`, ``)](value);
@@ -203,9 +212,9 @@ class filmDetails extends Component {
   }
 
   _commentsUpdate() {
-    let domElement = createDomElement(this.template);
-    domElement = domElement.querySelector(`.film-details__comments-list .film-details__comment:last-of-type`);
-    this._element.querySelector(`.film-details__comments-list`).appendChild(domElement);
+    let newDomElement = createDomElement(this.template);
+    newDomElement = newDomElement.querySelector(`.film-details__comments-list .film-details__comment:last-of-type`);
+    this._element.querySelector(`.film-details__comments-list`).appendChild(newDomElement);
     this._element.querySelector(`.film-details__comments-count`).textContent = this._comments.length;
   }
 
@@ -213,7 +222,7 @@ class filmDetails extends Component {
     if (evt.keyCode === 13 && evt.ctrlKey) {
       evt.preventDefault();
       let formData = new FormData(this._element.querySelector(`.film-details__inner`));
-      let newComment = filmDetails.convertData(formData);
+      let newComment = filmDetails.convertCommentData(formData);
       this._comments.push(newComment);
       if (newComment.text === ``) {
         return false;
@@ -223,10 +232,27 @@ class filmDetails extends Component {
     }
     return false;
   }
+  /* Изменение оценки */
+  set onScoreChange(fn) {
+    this._onScoreChange = fn;
+  }
 
-  _onCloseClick(evt) {
-    evt.preventDefault();
-    return (typeof this._onDetailsClose === `function`) && this._onDetailsClose();
+  _onScoreClick() {
+    let formData = new FormData(this._element.querySelector(`.film-details__inner`));
+    for (const pair of formData.entries()) {
+      const [property, value] = pair;
+      if (property === `score`) {
+        this._score = value;
+        this._rating = this._rating > value ? Math.round((this._rating - value / 10) * 10) / 10 : Math.round((this._rating + value / 10) * 10) / 10;
+        this._element.querySelector(`.film-details__total-rating`).textContent = this._rating;
+        let newData = {
+          score: this._score,
+          rating: this._rating,
+        };
+        return (typeof this._onScoreChange === `function`) && this._onScoreChange(newData);
+      }
+    }
+    return false;
   }
 
   bind() {
@@ -234,6 +260,9 @@ class filmDetails extends Component {
       .addEventListener(`click`, this._onCloseClick);
     this._element.querySelector(`.film-details__comment-input`)
       .addEventListener(`keydown`, this._onCommentKeyDown);
+    this._element.querySelectorAll(`.film-details__user-rating-input`).forEach((el) => {
+      el.addEventListener(`click`, this._onScoreClick);
+    });
   }
 
   unbind() {
@@ -241,6 +270,9 @@ class filmDetails extends Component {
       .removeEventListener(`click`, this._onCloseClick);
     this._element.querySelector(`.film-details__comment-input`)
       .removeEventListener(`keydown`, this._onCommentKeyDown);
+    this._element.querySelectorAll(`.film-details__user-rating-input`).forEach((el) => {
+      el.removeEventListener(`click`, this._onScoreClick);
+    });
   }
 }
 

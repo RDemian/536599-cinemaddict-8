@@ -112,6 +112,11 @@ const renderCardArray = (container, arr, count) => {
       filmDetailInstance.onCommentAdd = (newComment) => {
         currentData.comments.push(newComment);
       };
+      filmDetailInstance.onScoreChange = (newData) => {
+        currentData.score = newData.score;
+        currentData.rating = newData.rating;
+        filmInstance.update(currentData);
+      };
     };
   }
 };
