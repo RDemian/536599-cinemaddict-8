@@ -4,7 +4,7 @@ import moment from 'moment';
 import 'moment-duration-format';
 moment.locale(`ru`);
 
-const keyEnterKod = 13;
+const KEY_ENTER_CODE = 13;
 class filmDetails extends Component {
   constructor(data) {
     super();
@@ -226,7 +226,7 @@ class filmDetails extends Component {
   }
 
   _onCommentKeyDown(evt) {
-    if (evt.keyCode === keyEnterKod && evt.ctrlKey) {
+    if (evt.keyCode === KEY_ENTER_CODE && evt.ctrlKey) {
       evt.preventDefault();
       let formData = new FormData(this._element.querySelector(`.film-details__inner`));
       this._element.querySelector(`.film-details__comment-input`).value = ``;
