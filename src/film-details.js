@@ -315,14 +315,6 @@ class filmDetails extends Component {
     this._inWatchList = data.inWatchList;
     this._isWatched = data.isWatched;
     this._isFavorite = data.isFavorite;
-    /*
-    console.log(this._element);
-    let container = this._element.parentElement;
-    let newElement = createDomElement(this.template);
-    container.replaceChild(newElement, this._element);
-    this._element = newElement;
-    this.bind();
-    */
   }
 }
 

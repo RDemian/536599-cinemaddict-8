@@ -1,18 +1,30 @@
-import createFilter from './filter-create';
 import FilmDetails from './film-details.js';
 import Film from './film.js';
+import Filter from './filter.js';
 
 /* случайное целое число в диапазоне */
 const getRandomInt = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
-
-const filterContainer = document.querySelector(`.main-navigation`);
-
-filterContainer.insertAdjacentHTML(`beforeend`, createFilter(`All movies`));
-filterContainer.insertAdjacentHTML(`beforeend`, createFilter(`Watchlist`, getRandomInt(1, 13)));
-filterContainer.insertAdjacentHTML(`beforeend`, createFilter(`History`, getRandomInt(1, 13)));
-filterContainer.insertAdjacentHTML(`beforeend`, createFilter(`Favorites`, getRandomInt(1, 13)));
+/* Фильтры */
+const filterDataArray = [
+  {
+    name: `All movies`,
+    count: 0,
+  },
+  {
+    name: `Watchlist`,
+    count: 0,
+  },
+  {
+    name: `History`,
+    count: 0,
+  },
+  {
+    name: `Favorites`,
+    count: 0,
+  },
+];
 
 /* Генерация массива карточек filmArray */
 const getObjComment = () => {
@@ -92,15 +104,16 @@ const createFilmArray = (count) => {
   return filmArray;
 };
 
-const filmArray = createFilmArray(12);
+const filmArray = createFilmArray(4);
+const filmListContainer = document.querySelector(`.films-list .films-list__container`);
+const filmListExtraContainers = document.querySelectorAll(`.films-list--extra .films-list__container`);
+const filterContainer = document.querySelector(`.main-navigation`);
 
 /* выводим карточки в контейнер */
-const renderCardArray = (container, arr, count) => {
+const renderCardArray = (container, arr) => {
   container.innerHTML = ``;
-  if (arr.length < count) {
-    count = arr.length;
-  }
-  for (let i = 0; i < count; i += 1) {
+
+  for (let i = 0; i < arr.length; i += 1) {
     const currentData = arr[i];
     const filmInstance = new Film(currentData);
     const filmDetailInstance = new FilmDetails(currentData);
@@ -133,18 +146,36 @@ const renderCardArray = (container, arr, count) => {
   }
 };
 
-const filmListContainer = document.querySelector(`.films-list .films-list__container`);
-const filmListExtraContainers = document.querySelectorAll(`.films-list--extra .films-list__container`);
+const createFilteredArray = (filterName, arr) => {
+  filterName = filterName.replace(` `, `-`).toLowerCase();
+  const mapper = {
+    'all-movies': () => true,
+    'watchlist': (item) => item.inWatchList,
+    'history': (item) => item.isWatched,
+    'favorites': (item) => item.isFavorites,
+  };
 
-renderCardArray(filmListContainer, filmArray, 8);
-
-for (let container of filmListExtraContainers) {
-  renderCardArray(container, filmArray, 2);
-}
-
-/* Обработчик клика по фильтрам */
-const handlerFilterClick = () => {
-  renderCardArray(filmListContainer, filmArray, getRandomInt(1, filmArray.length));
+  const filteredArray = arr.filter(mapper[filterName]);
+  return filteredArray;
 };
 
-filterContainer.addEventListener(`click`, handlerFilterClick);
+const renderFilter = (container, arr) => {
+  for (let i = 0; i < arr.length; i += 1) {
+    const currentFilterData = arr[i];
+    const filterInstance = new Filter(currentFilterData);
+    container.appendChild(filterInstance.render());
+    filterInstance.onFilter = () => {
+      const filteredArray = createFilteredArray(currentFilterData.name, filmArray);
+      renderCardArray(filmListContainer, filteredArray);
+    };
+  }
+};
+
+renderCardArray(filmListContainer, filmArray);
+renderFilter(filterContainer, filterDataArray);
+
+for (let container of filmListExtraContainers) {
+  const extraFilmArray = Array.from(filmArray);
+  extraFilmArray.length = 2;
+  renderCardArray(container, extraFilmArray);
+}
