@@ -83,6 +83,9 @@ const createFilmArray = (count) => {
       `Фуга Нью-Йорк`,
       `Восход луны`,
       `Три друга`][Math.floor(Math.random() * 6)];
+    dataObj.inWatchList = false;
+    dataObj.isWatched = false;
+    dataObj.isFavorite = false;
 
     filmArray.push(dataObj);
   }
@@ -114,10 +117,18 @@ const renderCardArray = (container, arr, count) => {
         filmInstance.update(currentData);
       };
       filmDetailInstance.onScoreChange = (newData) => {
-        currentData.score = newData.score;
-        currentData.rating = newData.rating;
+        Object.assign(currentData, newData);
         filmInstance.update(currentData);
       };
+    };
+    /* Добавление в списки фильтрации */
+    filmInstance.onAddToWatchList = () => {
+      currentData.inWatchList = !currentData.inWatchList;
+      filmDetailInstance.updateData(currentData);
+    };
+    filmInstance.onMarkAsWatched = () => {
+      currentData.isWatched = !currentData.isWatched;
+      filmDetailInstance.updateData(currentData);
     };
   }
 };

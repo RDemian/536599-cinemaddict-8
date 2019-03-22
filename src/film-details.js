@@ -20,6 +20,9 @@ class filmDetails extends Component {
     this._age = data.age;
     this._original = data.original;
     this._score = data.score;
+    this._inWatchList = data.inWatchList;
+    this._isWatched = data.isWatched;
+    this._isFavorite = data.isFavorite;
 
     this._onDetailsClose = null;
     this._onCloseClick = this._onCloseClick.bind(this);
@@ -100,13 +103,13 @@ class filmDetails extends Component {
         </div>
 
         <section class="film-details__controls">
-          <input type="checkbox" class="film-details__control-input visually-hidden" id="watchlist" name="watchlist">
+          <input type="checkbox" class="film-details__control-input visually-hidden" id="watchlist" name="watchlist" ${this._inWatchList ? `checked` : ``}>
           <label for="watchlist" class="film-details__control-label film-details__control-label--watchlist">Add to watchlist</label>
 
-          <input type="checkbox" class="film-details__control-input visually-hidden" id="watched" name="watched" checked>
+          <input type="checkbox" class="film-details__control-input visually-hidden" id="watched" name="watched" ${this._isWatched ? `checked` : ``}>
           <label for="watched" class="film-details__control-label film-details__control-label--watched">Already watched</label>
 
-          <input type="checkbox" class="film-details__control-input visually-hidden" id="favorite" name="favorite">
+          <input type="checkbox" class="film-details__control-input visually-hidden" id="favorite" name="favorite" ${this._isFavorite ? `checked` : ``}>
           <label for="favorite" class="film-details__control-label film-details__control-label--favorite">Add to favorites</label>
         </section>
 
@@ -294,6 +297,32 @@ class filmDetails extends Component {
     this._element.querySelectorAll(`.film-details__emoji-label`).forEach((el) => {
       el.removeEventListener(`click`, this._onEmojiClick);
     });
+  }
+
+  updateData(data) {
+    this._title = data.title;
+    this._rating = data.rating;
+    this._year = data.year;
+    this._duration = data.duration;
+    this._genre = data.genre;
+    this._poster = data.poster;
+    this._description = data.description;
+    this._comments = Array.from(data.comments);
+
+    this._age = data.age;
+    this._original = data.original;
+    this._score = data.score;
+    this._inWatchList = data.inWatchList;
+    this._isWatched = data.isWatched;
+    this._isFavorite = data.isFavorite;
+    /*
+    console.log(this._element);
+    let container = this._element.parentElement;
+    let newElement = createDomElement(this.template);
+    container.replaceChild(newElement, this._element);
+    this._element = newElement;
+    this.bind();
+    */
   }
 }
 
