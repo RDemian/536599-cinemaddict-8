@@ -2,6 +2,8 @@ import FilmDetails from './film-details.js';
 import Film from './film.js';
 import Filter from './filter.js';
 import Statistic from './statistic.js';
+import Chart from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 /* случайное целое число в диапазоне */
 const getRandomInt = (min, max) => {
@@ -68,7 +70,7 @@ const createFilmArray = (count) => {
       2017,
       2018][Math.floor(Math.random() * 3)], getRandomInt(0, 11), getRandomInt(0, 28));
     dataObj.duration = getRandomInt(60, 110);
-    dataObj.genre = [`Comedy`, `Action`, `Adventure`];
+    dataObj.genre = new Array(1).fill().map(() => [`Sci-Fi`, `Animation`, `Fantasy`, `Comedy`, `TV Series`][Math.floor(Math.random() * 3)]);
     dataObj.poster = `${[
       `accused`,
       `blackmail`,
@@ -164,23 +166,130 @@ const createFilteredArray = (filterName, arr) => {
 };
 
 const renderFilter = (container, arr) => {
-  for (let i = 0; i < arr.length; i += 1) {
+  const filmBlock = document.querySelector(`.films`);
+  const statisticBlock = document.querySelector(`.statistic`);
+  for (let i = arr.length - 1; i > -1; i -= 1) {
     const currentFilterData = arr[i];
     const filterInstance = new Filter(currentFilterData);
-    container.appendChild(filterInstance.render());
+    container.prepend(filterInstance.render());
     filterInstance.onFilter = () => {
       const filteredArray = createFilteredArray(currentFilterData.name, filmArray);
+      filmBlock.classList.remove(`visually-hidden`);
+      statisticBlock.classList.contains(`visually-hidden`) || statisticBlock.classList.add(`visually-hidden`);
       renderCardArray(filmListContainer, filteredArray);
     };
   }
 };
 
 /* Рендер статистики*/
-const statisticInstance = new Statistic();
-mainContainer.appendChild(statisticInstance.render());
+const initChart = (statisticCtx, watchGenre) => {
+  // Обязательно рассчитайте высоту canvas, она зависит от количества элементов диаграммы
+  const BAR_HEIGHT = 50;
+  statisticCtx.height = BAR_HEIGHT * 5;
+  const myChart = new Chart(statisticCtx, {
+    plugins: [ChartDataLabels],
+    type: `horizontalBar`,
+    data: {
+      labels: Object.keys(watchGenre),
+      datasets: [{
+        data: Object.values(watchGenre),
+        backgroundColor: `#ffe800`,
+        hoverBackgroundColor: `#ffe800`,
+        anchor: `start`
+      }]
+    },
+    options: {
+      plugins: {
+        datalabels: {
+          font: {
+            size: 20
+          },
+          color: `#ffffff`,
+          anchor: `start`,
+          align: `start`,
+          offset: 40,
+        }
+      },
+      scales: {
+        yAxes: [{
+          ticks: {
+            fontColor: `#ffffff`,
+            padding: 100,
+            fontSize: 20
+          },
+          gridLines: {
+            display: false,
+            drawBorder: false
+          },
+          barThickness: 24
+        }],
+        xAxes: [{
+          ticks: {
+            display: false,
+            beginAtZero: true
+          },
+          gridLines: {
+            display: false,
+            drawBorder: false
+          },
+        }],
+      },
+      legend: {
+        display: false
+      },
+      tooltips: {
+        enabled: false
+      }
+    }
+  });
+
+  return myChart;
+};
+
+const getStaticData = () => {
+  const staticData = {
+    youWatched: 0,
+    duration: 0,
+    watchGenre: {},
+    topGenre: ``,
+  };
+
+  filmArray.forEach((el) => {
+    el.isWatched && (staticData.youWatched += 1) && (staticData.duration += el.duration);
+    Object.is(staticData.watchGenre[el.genre], undefined) ? staticData.watchGenre[el.genre] = 1 : staticData.watchGenre[el.genre] += 1;
+  });
+
+  staticData.topGenre = Object.entries(staticData.watchGenre);
+  staticData.topGenre = staticData.topGenre.reduce((maxEl, el) => {
+    /* el содержит массив вида ['genre', count] */
+    if (el[1] > maxEl[1]) {
+      maxEl = el;
+    }
+    return maxEl;
+  });
+  staticData.topGenre = staticData.topGenre[0];
+  return staticData;
+};
+
+const renderStatistic = () => {
+  const staticData = getStaticData();
+  const statisticInstance = new Statistic(staticData);
+  mainContainer.appendChild(statisticInstance.render());
+
+  const filmBlock = document.querySelector(`.films`);
+  const statisticBlock = document.querySelector(`.statistic`);
+  const statisticCtx = statisticBlock.querySelector(`.statistic__chart`);
+  statisticInstance.showStatistic = () => {
+    filmBlock.classList.contains(`visually-hidden`) || filmBlock.classList.add(`visually-hidden`);
+    statisticBlock.classList.remove(`visually-hidden`);
+    initChart(statisticCtx, staticData.watchGenre);
+  };
+};
 
 renderCardArray(filmListContainer, filmArray);
+renderStatistic();
 renderFilter(filterContainer, filterDataArray);
+
 
 for (let container of filmListExtraContainers) {
   const extraFilmArray = Array.from(filmArray);
