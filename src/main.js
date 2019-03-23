@@ -1,6 +1,7 @@
 import FilmDetails from './film-details.js';
 import Film from './film.js';
 import Filter from './filter.js';
+import Statistic from './statistic.js';
 
 /* случайное целое число в диапазоне */
 const getRandomInt = (min, max) => {
@@ -85,7 +86,7 @@ const createFilmArray = (count) => {
       `Aliquam erat volutpat.`,
       `Nunc fermentum tortor ac porta dapibus.`,
       `In rutrum ac purus sit amet tempus.`
-    ].filter(() => [true, false][Math.floor(Math.random() * 2)]).slice(0, getRandomInt(1, 3));
+    ].filter(() => [true, false][Math.floor(Math.random() * 1.9)]).slice(0, getRandomInt(1, 3));
     dataObj.comments = new Array(getRandomInt(1, 3)).fill().map(() => getObjComment());
     dataObj.age = getRandomInt(0, 18);
     dataObj.original = [
@@ -95,21 +96,22 @@ const createFilmArray = (count) => {
       `Фуга Нью-Йорк`,
       `Восход луны`,
       `Три друга`][Math.floor(Math.random() * 6)];
-    dataObj.inWatchList = false;
-    dataObj.isWatched = false;
-    dataObj.isFavorite = false;
+    dataObj.inWatchList = [true, false][Math.floor(Math.random() * 1.9)];
+    dataObj.isWatched = [true, false][Math.floor(Math.random() * 1.9)];
+    dataObj.isFavorite = [true, false][Math.floor(Math.random() * 1.9)];
 
     filmArray.push(dataObj);
   }
   return filmArray;
 };
 
-const filmArray = createFilmArray(4);
+const filmArray = createFilmArray(10);
 const filmListContainer = document.querySelector(`.films-list .films-list__container`);
 const filmListExtraContainers = document.querySelectorAll(`.films-list--extra .films-list__container`);
 const filterContainer = document.querySelector(`.main-navigation`);
+const mainContainer = document.body.querySelector(`main`);
 
-/* выводим карточки в контейнер */
+/* Рендер карточек фильмов */
 const renderCardArray = (container, arr) => {
   container.innerHTML = ``;
 
@@ -117,7 +119,9 @@ const renderCardArray = (container, arr) => {
     const currentData = arr[i];
     const filmInstance = new Film(currentData);
     const filmDetailInstance = new FilmDetails(currentData);
+
     container.appendChild(filmInstance.render());
+
     /* При Клике по комментариям выполняется функция ниже */
     filmInstance.onDetailsDisplay = () => {
       document.body.appendChild(filmDetailInstance.render());
@@ -145,7 +149,7 @@ const renderCardArray = (container, arr) => {
     };
   }
 };
-
+/* Рендер фильтров */
 const createFilteredArray = (filterName, arr) => {
   filterName = filterName.replace(` `, `-`).toLowerCase();
   const mapper = {
@@ -170,6 +174,10 @@ const renderFilter = (container, arr) => {
     };
   }
 };
+
+/* Рендер статистики*/
+const statisticInstance = new Statistic();
+mainContainer.appendChild(statisticInstance.render());
 
 renderCardArray(filmListContainer, filmArray);
 renderFilter(filterContainer, filterDataArray);
