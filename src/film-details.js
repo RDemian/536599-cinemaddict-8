@@ -16,10 +16,12 @@ class filmDetails extends Component {
     this._poster = data.poster;
     this._description = data.description;
     this._comments = Array.from(data.comments);
-
     this._age = data.age;
     this._original = data.original;
     this._score = data.score;
+    this._inWatchList = data.inWatchList;
+    this._isWatched = data.isWatched;
+    this._isFavorite = data.isFavorite;
 
     this._onDetailsClose = null;
     this._onCloseClick = this._onCloseClick.bind(this);
@@ -31,6 +33,9 @@ class filmDetails extends Component {
     this._onScoreClick = this._onScoreClick.bind(this);
 
     this._onEmojiClick = this._onEmojiClick.bind(this);
+
+    this._onAddToFilterList = null;
+    this._onControlClick = this._onControlClick.bind(this);
   }
 
   get template() {
@@ -100,13 +105,13 @@ class filmDetails extends Component {
         </div>
 
         <section class="film-details__controls">
-          <input type="checkbox" class="film-details__control-input visually-hidden" id="watchlist" name="watchlist">
+          <input type="checkbox" class="film-details__control-input visually-hidden" id="watchlist" name="watchlist" ${this._inWatchList ? `checked` : ``}>
           <label for="watchlist" class="film-details__control-label film-details__control-label--watchlist">Add to watchlist</label>
 
-          <input type="checkbox" class="film-details__control-input visually-hidden" id="watched" name="watched" checked>
+          <input type="checkbox" class="film-details__control-input visually-hidden" id="watched" name="watched" ${this._isWatched ? `checked` : ``}>
           <label for="watched" class="film-details__control-label film-details__control-label--watched">Already watched</label>
 
-          <input type="checkbox" class="film-details__control-input visually-hidden" id="favorite" name="favorite">
+          <input type="checkbox" class="film-details__control-input visually-hidden" id="favorite" name="favorite" ${this._isFavorite ? `checked` : ``}>
           <label for="favorite" class="film-details__control-label film-details__control-label--favorite">Add to favorites</label>
         </section>
 
@@ -181,15 +186,127 @@ class filmDetails extends Component {
   set onDetailsClose(fn) {
     this._onDetailsClose = fn;
   }
+  set onAddToFilterList(fn) {
+    this._onAddToFilterList = fn;
+  }
+  set onCommentAdd(fn) {
+    this._onCommentAdd = fn;
+  }
+  set onScoreChange(fn) {
+    this._onScoreChange = fn;
+  }
 
   _onCloseClick(evt) {
     evt.preventDefault();
     return (typeof this._onDetailsClose === `function`) && this._onDetailsClose();
   }
+  /* Добавление в списки фильтрации */
+  _onControlClick(evt) {
+    const mapper = {
+      watchlist: `inWatchList`,
+      watched: `isWatched`,
+      favorite: `isFavorite`,
+    };
 
+    evt.preventDefault();
+    return (typeof this._onAddToFilterList === `function`) && this._onAddToFilterList(mapper[evt.target.id]);
+  }
   /* Добавление комментариев */
-  set onCommentAdd(fn) {
-    this._onCommentAdd = fn;
+  _onCommentKeyDown(evt) {
+    if (evt.keyCode === KEY_ENTER_CODE && evt.ctrlKey) {
+      evt.preventDefault();
+      let formData = new FormData(this._element.querySelector(`.film-details__inner`));
+      this._element.querySelector(`.film-details__comment-input`).value = ``;
+      this._element.querySelector(`.film-details__add-emoji-label`).textContent = `😐`;
+      let newComment = filmDetails.convertCommentData(formData);
+      this._comments.push(newComment);
+      if (newComment.text === ``) {
+        return false;
+      }
+      this._commentsUpdate();
+      return (typeof this._onCommentAdd === `function`) && this._onCommentAdd(newComment);
+    }
+    return false;
+  }
+  /* Изменение оценки */
+  _onScoreClick() {
+    let formData = new FormData(this._element.querySelector(`.film-details__inner`));
+    for (const pair of formData.entries()) {
+      const [property, value] = pair;
+      if (property === `score`) {
+        this._score = value;
+        this._rating = this._rating > value ? Math.round((this._rating - value / 10) * 10) / 10 : Math.round((this._rating + value / 10) * 10) / 10;
+        this._element.querySelector(`.film-details__total-rating`).textContent = this._rating;
+        this._element.querySelector(`.film-details__user-rating`).textContent = `Your rate ${this._score}`;
+        let newData = {
+          score: this._score,
+          rating: this._rating,
+        };
+        return (typeof this._onScoreChange === `function`) && this._onScoreChange(newData);
+      }
+    }
+    return false;
+  }
+  /* Выбор эмодзи */
+  _onEmojiClick(el) {
+    this._element.querySelector(`.film-details__add-emoji-label`).textContent = el.target.textContent;
+  }
+
+  bind() {
+    this._element.querySelector(`.film-details__close-btn`)
+      .addEventListener(`click`, this._onCloseClick);
+    this._element.querySelector(`.film-details__comment-input`)
+      .addEventListener(`keydown`, this._onCommentKeyDown);
+    this._element.querySelectorAll(`.film-details__user-rating-input`).forEach((el) => {
+      el.addEventListener(`click`, this._onScoreClick);
+    });
+    this._element.querySelectorAll(`.film-details__emoji-label`).forEach((el) => {
+      el.addEventListener(`click`, this._onEmojiClick);
+    });
+    this._element.querySelectorAll(`.film-details__control-input`).forEach((el) => {
+      el.addEventListener(`change`, this._onControlClick);
+    });
+  }
+
+  unbind() {
+    this._element.querySelector(`.film-details__close-btn`)
+      .removeEventListener(`click`, this._onCloseClick);
+    this._element.querySelector(`.film-details__comment-input`)
+      .removeEventListener(`keydown`, this._onCommentKeyDown);
+    this._element.querySelectorAll(`.film-details__user-rating-input`).forEach((el) => {
+      el.removeEventListener(`click`, this._onScoreClick);
+    });
+    this._element.querySelectorAll(`.film-details__emoji-label`).forEach((el) => {
+      el.removeEventListener(`click`, this._onEmojiClick);
+    });
+    this._element.querySelectorAll(`.film-details__control-input`).forEach((el) => {
+      el.removeEventListener(`change`, this._onControlClick);
+    });
+  }
+
+  updateData(data) {
+    this._title = data.title;
+    this._rating = data.rating;
+    this._year = data.year;
+    this._duration = data.duration;
+    this._genre = data.genre;
+    this._poster = data.poster;
+    this._description = data.description;
+    this._comments = Array.from(data.comments);
+
+    this._age = data.age;
+    this._original = data.original;
+    this._score = data.score;
+    this._inWatchList = data.inWatchList;
+    this._isWatched = data.isWatched;
+    this._isFavorite = data.isFavorite;
+  }
+
+  _commentsUpdate() {
+    let newDomElement = createDomElement(this.template);
+    newDomElement = newDomElement.querySelector(`.film-details__comments-list .film-details__comment:last-of-type`);
+    this._element.querySelector(`.film-details__comments-list`).appendChild(newDomElement);
+    this._element.querySelector(`.film-details__comments-count`).textContent = this._comments.length;
   }
 
   static convertCommentData(formData) {
@@ -216,84 +333,6 @@ class filmDetails extends Component {
       }
     }
     return entryObj;
-  }
-
-  _commentsUpdate() {
-    let newDomElement = createDomElement(this.template);
-    newDomElement = newDomElement.querySelector(`.film-details__comments-list .film-details__comment:last-of-type`);
-    this._element.querySelector(`.film-details__comments-list`).appendChild(newDomElement);
-    this._element.querySelector(`.film-details__comments-count`).textContent = this._comments.length;
-  }
-
-  _onCommentKeyDown(evt) {
-    if (evt.keyCode === KEY_ENTER_CODE && evt.ctrlKey) {
-      evt.preventDefault();
-      let formData = new FormData(this._element.querySelector(`.film-details__inner`));
-      this._element.querySelector(`.film-details__comment-input`).value = ``;
-      this._element.querySelector(`.film-details__add-emoji-label`).textContent = `😐`;
-      let newComment = filmDetails.convertCommentData(formData);
-      this._comments.push(newComment);
-      if (newComment.text === ``) {
-        return false;
-      }
-      this._commentsUpdate();
-      return (typeof this._onCommentAdd === `function`) && this._onCommentAdd(newComment);
-    }
-    return false;
-  }
-  /* Изменение оценки */
-  set onScoreChange(fn) {
-    this._onScoreChange = fn;
-  }
-
-  _onScoreClick() {
-    let formData = new FormData(this._element.querySelector(`.film-details__inner`));
-    for (const pair of formData.entries()) {
-      const [property, value] = pair;
-      if (property === `score`) {
-        this._score = value;
-        this._rating = this._rating > value ? Math.round((this._rating - value / 10) * 10) / 10 : Math.round((this._rating + value / 10) * 10) / 10;
-        this._element.querySelector(`.film-details__total-rating`).textContent = this._rating;
-        this._element.querySelector(`.film-details__user-rating`).textContent = `Your rate ${this._score}`;
-        let newData = {
-          score: this._score,
-          rating: this._rating,
-        };
-        return (typeof this._onScoreChange === `function`) && this._onScoreChange(newData);
-      }
-    }
-    return false;
-  }
-
-  /* Выбор эмодзи */
-  _onEmojiClick(el) {
-    this._element.querySelector(`.film-details__add-emoji-label`).textContent = el.target.textContent;
-  }
-
-  bind() {
-    this._element.querySelector(`.film-details__close-btn`)
-      .addEventListener(`click`, this._onCloseClick);
-    this._element.querySelector(`.film-details__comment-input`)
-      .addEventListener(`keydown`, this._onCommentKeyDown);
-    this._element.querySelectorAll(`.film-details__user-rating-input`).forEach((el) => {
-      el.addEventListener(`click`, this._onScoreClick);
-    });
-    this._element.querySelectorAll(`.film-details__emoji-label`).forEach((el) => {
-      el.addEventListener(`click`, this._onEmojiClick);
-    });
-  }
-
-  unbind() {
-    this._element.querySelector(`.film-details__close-btn`)
-      .removeEventListener(`click`, this._onCloseClick);
-    this._element.querySelector(`.film-details__comment-input`)
-      .removeEventListener(`keydown`, this._onCommentKeyDown);
-    this._element.querySelectorAll(`.film-details__user-rating-input`).forEach((el) => {
-      el.removeEventListener(`click`, this._onScoreClick);
-    });
-    this._element.querySelectorAll(`.film-details__emoji-label`).forEach((el) => {
-      el.removeEventListener(`click`, this._onEmojiClick);
-    });
   }
 }
 

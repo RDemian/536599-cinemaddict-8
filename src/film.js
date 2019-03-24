@@ -14,9 +14,15 @@ class Film extends Component {
     this._poster = data.poster;
     this._description = data.description;
     this._comments = Array.from(data.comments);
+    this._inWatchList = data.inWatchList;
+    this._isWatched = data.isWatched;
+    this._isFavorite = data.isFavorite;
 
     this._onDetailsDisplay = null;
     this._onCommentsClick = this._onCommentsClick.bind(this);
+
+    this._onAddToFilterList = null;
+    this._onControlClick = this._onControlClick.bind(this);
   }
 
   get template() {
@@ -35,9 +41,9 @@ class Film extends Component {
     <button class="film-card__comments">${this._comments.length} comments</button>
 
     <form class="film-card__controls">
-      <button class="film-card__controls-item button film-card__controls-item--add-to-watchlist"><!--Add to watchlist--> WL</button>
-      <button class="film-card__controls-item button film-card__controls-item--mark-as-watched"><!--Mark as watched-->WTCHD</button>
-      <button class="film-card__controls-item button film-card__controls-item--favorite"><!--Mark as favorite-->FAV</button>
+      <button id="inWatchList" class="film-card__controls-item button film-card__controls-item--add-to-watchlist ${this._inWatchList ? `film-card__controls-item--active` : ``}"><!--Add to watchlist--> WL</button>
+      <button id="isWatched" class="film-card__controls-item button film-card__controls-item--mark-as-watched ${this._isWatched ? `film-card__controls-item--active` : ``}"><!--Mark as watched-->WTCHD</button>
+      <button id="isFavorite" class="film-card__controls-item button film-card__controls-item--favorite ${this._isFavorite ? `film-card__controls-item--active` : ``}"><!--Mark as favorite-->FAV</button>
     </form>
   </article>
   `.trim();
@@ -46,20 +52,33 @@ class Film extends Component {
   set onDetailsDisplay(fn) {
     this._onDetailsDisplay = fn;
   }
+  set onAddToFilterList(fn) {
+    this._onAddToFilterList = fn;
+  }
 
   _onCommentsClick(evt) {
     evt.preventDefault();
     return (typeof this._onDetailsDisplay === `function`) && this._onDetailsDisplay();
   }
+  _onControlClick(evt) {
+    evt.preventDefault();
+    return (typeof this._onAddToFilterList === `function`) && this._onAddToFilterList(evt.target.id);
+  }
 
   bind() {
     this._element.querySelector(`.film-card__comments`)
         .addEventListener(`click`, this._onCommentsClick);
+    this._element.querySelectorAll(`.film-card__controls-item`).forEach((el) => {
+      el.addEventListener(`click`, this._onControlClick);
+    });
   }
 
   unbind() {
     this._element.querySelector(`.film-card__comments`)
         .removeEventListener(`click`, this._onCommentsClick);
+    this._element.querySelectorAll(`.film-card__controls-item`).forEach((el) => {
+      el.addEventListener(`click`, this._onControlClick);
+    });
   }
 
   update(data) {
@@ -71,6 +90,10 @@ class Film extends Component {
     this._poster = data.poster;
     this._description = data.description;
     this._comments = Array.from(data.comments);
+    this._inWatchList = data.inWatchList;
+    this._isWatched = data.isWatched;
+    this._isFavorite = data.isFavorite;
+
     let container = this._element.parentElement;
     let newElement = createDomElement(this.template);
     container.replaceChild(newElement, this._element);
