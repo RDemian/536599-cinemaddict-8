@@ -34,6 +34,12 @@ class filmDetails extends Component {
     this._onScoreClick = this._onScoreClick.bind(this);
 
     this._onEmojiClick = this._onEmojiClick.bind(this);
+
+    this._onAddToWatchList = null;
+    this._onAddToWatchListClick = this._onAddToWatchListClick.bind(this);
+
+    this._onMarkAsWatched = null;
+    this._onMarkAsWatchedClick = this._onMarkAsWatchedClick.bind(this);
   }
 
   get template() {
@@ -188,6 +194,22 @@ class filmDetails extends Component {
   _onCloseClick(evt) {
     evt.preventDefault();
     return (typeof this._onDetailsClose === `function`) && this._onDetailsClose();
+  }
+
+  set onAddToWatchList(fn) {
+    this._onAddToWatchList = fn;
+  }
+  set onMarkAsWatched(fn) {
+    this._onMarkAsWatched = fn;
+  }
+
+  _onAddToWatchListClick(evt) {
+    evt.preventDefault();
+    return (typeof this._onAddToWatchList === `function`) && this._onAddToWatchList();
+  }
+  _onMarkAsWatchedClick(evt) {
+    evt.preventDefault();
+    return (typeof this._onMarkAsWatched === `function`) && this._onMarkAsWatched();
   }
 
   /* Добавление комментариев */

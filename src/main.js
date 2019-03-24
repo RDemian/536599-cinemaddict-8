@@ -2,14 +2,12 @@ import FilmDetails from './film-details.js';
 import Film from './film.js';
 import Filter from './filter.js';
 import Statistic from './statistic.js';
-import Chart from 'chart.js';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 /* случайное целое число в диапазоне */
 const getRandomInt = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
-/* Фильтры */
+/* Даныне для фильтров */
 const filterDataArray = [
   {
     name: `All movies`,
@@ -29,6 +27,18 @@ const filterDataArray = [
   },
 ];
 
+const createFilteredArray = (filterName, arr) => {
+  filterName = filterName.replace(` `, `-`).toLowerCase();
+  const mapper = {
+    'all-movies': () => true,
+    'watchlist': (item) => item.inWatchList,
+    'history': (item) => item.isWatched,
+    'favorites': (item) => item.isFavorites,
+  };
+
+  const filteredArray = arr.filter(mapper[filterName]);
+  return filteredArray;
+};
 /* Генерация массива карточек filmArray */
 const getObjComment = () => {
   return {
@@ -106,13 +116,90 @@ const createFilmArray = (count) => {
   }
   return filmArray;
 };
+/* Подготовка данных для блока статистики */
+const getStaticData = () => {
+  const staticData = {
+    youWatched: 0,
+    duration: 0,
+    chartData: {},
+    topGenre: ``,
+  };
 
-const filmArray = createFilmArray(10);
+  filmArray.forEach((el) => {
+    if (el.isWatched) {
+      staticData.youWatched += 1;
+      staticData.duration += el.duration;
+
+      if (Object.is(staticData.chartData[el.genre], undefined)) {
+        staticData.chartData[el.genre] = 1;
+      } else {
+        staticData.chartData[el.genre] += 1;
+      }
+    }
+  });
+
+  staticData.topGenre = Object.entries(staticData.chartData);
+  staticData.topGenre = staticData.topGenre.reduce((maxEl, el) => {
+    /* el содержит массив вида ['genre', count] */
+    if (el[1] > maxEl[1]) {
+      maxEl = el;
+    }
+    return maxEl;
+  });
+  staticData.topGenre = staticData.topGenre[0];
+  return staticData;
+};
+
+let currentFilterName = ``;
+
+const satisfyCurrentFilter = (name) => {
+  const mapper = {
+    inWatchList: `Watchlist`,
+    isWatched: `History`,
+    all: `All movies`,
+    isFavorites: `Favorites`,
+  };
+  return mapper[name] === currentFilterName;
+};
+
+/* Основной модуль */
+const filmArray = createFilmArray(5);
 const filmListContainer = document.querySelector(`.films-list .films-list__container`);
 const filmListExtraContainers = document.querySelectorAll(`.films-list--extra .films-list__container`);
 const filterContainer = document.querySelector(`.main-navigation`);
 const mainContainer = document.body.querySelector(`main`);
 
+/* Рендер статистики*/
+const renderStatistic = () => {
+  const statisticInstance = new Statistic(getStaticData());
+  mainContainer.appendChild(statisticInstance.render());
+
+  const filmBlock = document.querySelector(`.films`);
+  const statisticBlock = document.querySelector(`.statistic`);
+  if (!filmBlock.classList.contains(`visually-hidden`)) {
+    filmBlock.classList.add(`visually-hidden`);
+  }
+  statisticBlock.classList.remove(`visually-hidden`);
+};
+/* Рендер фильтров */
+const renderFilter = (container, arr) => {
+  const filmBlock = document.querySelector(`.films`);
+  for (let i = arr.length - 1; i > -1; i -= 1) {
+    const currentFilterData = arr[i];
+    const filterInstance = new Filter(currentFilterData);
+    container.prepend(filterInstance.render());
+    filterInstance.onFilter = () => {
+      const filteredArray = createFilteredArray(currentFilterData.name, filmArray);
+      filmBlock.classList.remove(`visually-hidden`);
+      const statisticBlock = document.querySelector(`.statistic`);
+      if (statisticBlock) {
+        statisticBlock.remove();
+      }
+      renderCardArray(filmListContainer, filteredArray);
+      currentFilterName = currentFilterData.name;
+    };
+  }
+};
 /* Рендер карточек фильмов */
 const renderCardArray = (container, arr) => {
   container.innerHTML = ``;
@@ -143,151 +230,27 @@ const renderCardArray = (container, arr) => {
     /* Добавление в списки фильтрации */
     filmInstance.onAddToWatchList = () => {
       currentData.inWatchList = !currentData.inWatchList;
+      filmInstance.update(currentData);
       filmDetailInstance.updateData(currentData);
+      if (satisfyCurrentFilter(`inWatchList`) && !currentData.inWatchList) {
+        filmInstance.element.remove();
+        filmInstance.unrender();
+      }
     };
     filmInstance.onMarkAsWatched = () => {
       currentData.isWatched = !currentData.isWatched;
+      filmInstance.update(currentData);
       filmDetailInstance.updateData(currentData);
-    };
-  }
-};
-/* Рендер фильтров */
-const createFilteredArray = (filterName, arr) => {
-  filterName = filterName.replace(` `, `-`).toLowerCase();
-  const mapper = {
-    'all-movies': () => true,
-    'watchlist': (item) => item.inWatchList,
-    'history': (item) => item.isWatched,
-    'favorites': (item) => item.isFavorites,
-  };
-
-  const filteredArray = arr.filter(mapper[filterName]);
-  return filteredArray;
-};
-
-const renderFilter = (container, arr) => {
-  const filmBlock = document.querySelector(`.films`);
-  const statisticBlock = document.querySelector(`.statistic`);
-  for (let i = arr.length - 1; i > -1; i -= 1) {
-    const currentFilterData = arr[i];
-    const filterInstance = new Filter(currentFilterData);
-    container.prepend(filterInstance.render());
-    filterInstance.onFilter = () => {
-      const filteredArray = createFilteredArray(currentFilterData.name, filmArray);
-      filmBlock.classList.remove(`visually-hidden`);
-      statisticBlock.classList.contains(`visually-hidden`) || statisticBlock.classList.add(`visually-hidden`);
-      renderCardArray(filmListContainer, filteredArray);
-    };
-  }
-};
-
-/* Рендер статистики*/
-const initChart = (statisticCtx, watchGenre) => {
-  // Обязательно рассчитайте высоту canvas, она зависит от количества элементов диаграммы
-  const BAR_HEIGHT = 50;
-  statisticCtx.height = BAR_HEIGHT * 5;
-  const myChart = new Chart(statisticCtx, {
-    plugins: [ChartDataLabels],
-    type: `horizontalBar`,
-    data: {
-      labels: Object.keys(watchGenre),
-      datasets: [{
-        data: Object.values(watchGenre),
-        backgroundColor: `#ffe800`,
-        hoverBackgroundColor: `#ffe800`,
-        anchor: `start`
-      }]
-    },
-    options: {
-      plugins: {
-        datalabels: {
-          font: {
-            size: 20
-          },
-          color: `#ffffff`,
-          anchor: `start`,
-          align: `start`,
-          offset: 40,
-        }
-      },
-      scales: {
-        yAxes: [{
-          ticks: {
-            fontColor: `#ffffff`,
-            padding: 100,
-            fontSize: 20
-          },
-          gridLines: {
-            display: false,
-            drawBorder: false
-          },
-          barThickness: 24
-        }],
-        xAxes: [{
-          ticks: {
-            display: false,
-            beginAtZero: true
-          },
-          gridLines: {
-            display: false,
-            drawBorder: false
-          },
-        }],
-      },
-      legend: {
-        display: false
-      },
-      tooltips: {
-        enabled: false
+      if (satisfyCurrentFilter(`isWatched`) && !currentData.inWatchList) {
+        filmInstance.element.remove();
+        filmInstance.unrender();
       }
-    }
-  });
-
-  return myChart;
-};
-
-const getStaticData = () => {
-  const staticData = {
-    youWatched: 0,
-    duration: 0,
-    watchGenre: {},
-    topGenre: ``,
-  };
-
-  filmArray.forEach((el) => {
-    el.isWatched && (staticData.youWatched += 1) && (staticData.duration += el.duration);
-    Object.is(staticData.watchGenre[el.genre], undefined) ? staticData.watchGenre[el.genre] = 1 : staticData.watchGenre[el.genre] += 1;
-  });
-
-  staticData.topGenre = Object.entries(staticData.watchGenre);
-  staticData.topGenre = staticData.topGenre.reduce((maxEl, el) => {
-    /* el содержит массив вида ['genre', count] */
-    if (el[1] > maxEl[1]) {
-      maxEl = el;
-    }
-    return maxEl;
-  });
-  staticData.topGenre = staticData.topGenre[0];
-  return staticData;
-};
-
-const renderStatistic = () => {
-  const staticData = getStaticData();
-  const statisticInstance = new Statistic(staticData);
-  mainContainer.appendChild(statisticInstance.render());
-
-  const filmBlock = document.querySelector(`.films`);
-  const statisticBlock = document.querySelector(`.statistic`);
-  const statisticCtx = statisticBlock.querySelector(`.statistic__chart`);
-  statisticInstance.showStatistic = () => {
-    filmBlock.classList.contains(`visually-hidden`) || filmBlock.classList.add(`visually-hidden`);
-    statisticBlock.classList.remove(`visually-hidden`);
-    initChart(statisticCtx, staticData.watchGenre);
-  };
+    };
+  }
 };
 
 renderCardArray(filmListContainer, filmArray);
-renderStatistic();
+document.querySelector(`.main-navigation__item--additional`).addEventListener(`click`, renderStatistic);
 renderFilter(filterContainer, filterDataArray);
 
 

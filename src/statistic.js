@@ -2,16 +2,17 @@ import Component from './component';
 import moment from 'moment';
 import 'moment-duration-format';
 moment.locale(`ru`);
-
+import Chart from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 class Statistic extends Component {
   constructor(data) {
     super();
     this._youWatched = data.youWatched;
     this._duration = data.duration;
     this._topGenre = data.topGenre;
+    this._chartData = data.chartData;
 
-    this._showStatistic = null;
-    this._showStatisticClick = this._showStatisticClick.bind(this);
+    this._myChart = null;
   }
 
   get template() {
@@ -61,21 +62,81 @@ class Statistic extends Component {
     </section>`.trim();
   }
 
-  set showStatistic(fn) {
-    this._showStatistic = fn;
+  _initChart() {
+    // Обязательно рассчитайте высоту canvas, она зависит от количества элементов диаграммы
+    const statisticCtx = this._element.querySelector(`.statistic__chart`);
+
+    const BAR_HEIGHT = 50;
+    statisticCtx.height = BAR_HEIGHT * 5;
+    const myChart = new Chart(statisticCtx, {
+      plugins: [ChartDataLabels],
+      type: `horizontalBar`,
+      data: {
+        labels: Object.keys(this._chartData),
+        datasets: [{
+          data: Object.values(this._chartData),
+          backgroundColor: `#ffe800`,
+          hoverBackgroundColor: `#ffe800`,
+          anchor: `start`
+        }]
+      },
+      options: {
+        plugins: {
+          datalabels: {
+            font: {
+              size: 20
+            },
+            color: `#ffffff`,
+            anchor: `start`,
+            align: `start`,
+            offset: 40,
+          }
+        },
+        scales: {
+          yAxes: [{
+            ticks: {
+              fontColor: `#ffffff`,
+              padding: 100,
+              fontSize: 20
+            },
+            gridLines: {
+              display: false,
+              drawBorder: false
+            },
+            barThickness: 24
+          }],
+          xAxes: [{
+            ticks: {
+              display: false,
+              beginAtZero: true
+            },
+            gridLines: {
+              display: false,
+              drawBorder: false
+            },
+          }],
+        },
+        legend: {
+          display: false
+        },
+        tooltips: {
+          enabled: false
+        }
+      }
+    });
+
+    return myChart;
   }
 
-  _showStatisticClick(evt) {
-    evt.preventDefault();
-    return (typeof this._showStatistic === `function`) && this._showStatistic();
+  render() {
+    super.render();
+    this._myChart = this._initChart();
+    return this._element;
   }
 
-  bind() {
-    document.querySelector(`.main-navigation__item--additional`).addEventListener(`click`, this._showStatisticClick);
-  }
-
-  unbind() {
-    document.querySelector(`.main-navigation__item--additional`).removeEventListener(`click`, this._showStatisticClick);
+  unrender() {
+    super.unrender();
+    this._myChart = null;
   }
 }
 

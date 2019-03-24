@@ -14,6 +14,9 @@ class Film extends Component {
     this._poster = data.poster;
     this._description = data.description;
     this._comments = Array.from(data.comments);
+    this._inWatchList = data.inWatchList;
+    this._isWatched = data.isWatched;
+    this._isFavorite = data.isFavorite;
 
     this._onDetailsDisplay = null;
     this._onCommentsClick = this._onCommentsClick.bind(this);
@@ -41,9 +44,9 @@ class Film extends Component {
     <button class="film-card__comments">${this._comments.length} comments</button>
 
     <form class="film-card__controls">
-      <button class="film-card__controls-item button film-card__controls-item--add-to-watchlist"><!--Add to watchlist--> WL</button>
-      <button class="film-card__controls-item button film-card__controls-item--mark-as-watched"><!--Mark as watched-->WTCHD</button>
-      <button class="film-card__controls-item button film-card__controls-item--favorite"><!--Mark as favorite-->FAV</button>
+      <button class="film-card__controls-item button film-card__controls-item--add-to-watchlist ${this._inWatchList ? `film-card__controls-item--active` : ``}"><!--Add to watchlist--> WL</button>
+      <button class="film-card__controls-item button film-card__controls-item--mark-as-watched ${this._isWatched ? `film-card__controls-item--active` : ``}"><!--Mark as watched-->WTCHD</button>
+      <button class="film-card__controls-item button film-card__controls-item--favorite ${this._isFavorite ? `film-card__controls-item--active` : ``}"><!--Mark as favorite-->FAV</button>
     </form>
   </article>
   `.trim();
@@ -99,6 +102,10 @@ class Film extends Component {
     this._poster = data.poster;
     this._description = data.description;
     this._comments = Array.from(data.comments);
+    this._inWatchList = data.inWatchList;
+    this._isWatched = data.isWatched;
+    this._isFavorite = data.isFavorite;
+
     let container = this._element.parentElement;
     let newElement = createDomElement(this.template);
     container.replaceChild(newElement, this._element);
