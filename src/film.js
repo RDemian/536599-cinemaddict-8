@@ -21,11 +21,8 @@ class Film extends Component {
     this._onDetailsDisplay = null;
     this._onCommentsClick = this._onCommentsClick.bind(this);
 
-    this._onAddToWatchList = null;
-    this._onAddToWatchListClick = this._onAddToWatchListClick.bind(this);
-
-    this._onMarkAsWatched = null;
-    this._onMarkAsWatchedClick = this._onMarkAsWatchedClick.bind(this);
+    this._onAddToFilterList = null;
+    this._onControlClick = this._onControlClick.bind(this);
   }
 
   get template() {
@@ -44,9 +41,9 @@ class Film extends Component {
     <button class="film-card__comments">${this._comments.length} comments</button>
 
     <form class="film-card__controls">
-      <button class="film-card__controls-item button film-card__controls-item--add-to-watchlist ${this._inWatchList ? `film-card__controls-item--active` : ``}"><!--Add to watchlist--> WL</button>
-      <button class="film-card__controls-item button film-card__controls-item--mark-as-watched ${this._isWatched ? `film-card__controls-item--active` : ``}"><!--Mark as watched-->WTCHD</button>
-      <button class="film-card__controls-item button film-card__controls-item--favorite ${this._isFavorite ? `film-card__controls-item--active` : ``}"><!--Mark as favorite-->FAV</button>
+      <button id="inWatchList" class="film-card__controls-item button film-card__controls-item--add-to-watchlist ${this._inWatchList ? `film-card__controls-item--active` : ``}"><!--Add to watchlist--> WL</button>
+      <button id="isWatched" class="film-card__controls-item button film-card__controls-item--mark-as-watched ${this._isWatched ? `film-card__controls-item--active` : ``}"><!--Mark as watched-->WTCHD</button>
+      <button id="isFavorite" class="film-card__controls-item button film-card__controls-item--favorite ${this._isFavorite ? `film-card__controls-item--active` : ``}"><!--Mark as favorite-->FAV</button>
     </form>
   </article>
   `.trim();
@@ -55,42 +52,33 @@ class Film extends Component {
   set onDetailsDisplay(fn) {
     this._onDetailsDisplay = fn;
   }
-  set onAddToWatchList(fn) {
-    this._onAddToWatchList = fn;
-  }
-  set onMarkAsWatched(fn) {
-    this._onMarkAsWatched = fn;
+  set onAddToFilterList(fn) {
+    this._onAddToFilterList = fn;
   }
 
   _onCommentsClick(evt) {
     evt.preventDefault();
     return (typeof this._onDetailsDisplay === `function`) && this._onDetailsDisplay();
   }
-  _onAddToWatchListClick(evt) {
+  _onControlClick(evt) {
     evt.preventDefault();
-    return (typeof this._onAddToWatchList === `function`) && this._onAddToWatchList();
-  }
-  _onMarkAsWatchedClick(evt) {
-    evt.preventDefault();
-    return (typeof this._onMarkAsWatched === `function`) && this._onMarkAsWatched();
+    return (typeof this._onAddToFilterList === `function`) && this._onAddToFilterList(evt.target.id);
   }
 
   bind() {
     this._element.querySelector(`.film-card__comments`)
         .addEventListener(`click`, this._onCommentsClick);
-    this._element.querySelector(`.film-card__controls-item--add-to-watchlist`)
-        .addEventListener(`click`, this._onAddToWatchListClick);
-    this._element.querySelector(`.film-card__controls-item--mark-as-watched`)
-        .addEventListener(`click`, this._onMarkAsWatchedClick);
+    this._element.querySelectorAll(`.film-card__controls-item`).forEach((el) => {
+      el.addEventListener(`click`, this._onControlClick);
+    });
   }
 
   unbind() {
     this._element.querySelector(`.film-card__comments`)
         .removeEventListener(`click`, this._onCommentsClick);
-    this._element.querySelector(`.film-card__controls-item--add-to-watchlist`)
-        .removeEventListener(`click`, this._onAddToWatchListClick);
-    this._element.querySelector(`.film-card__controls-item--mark-as-watched`)
-        .removeEventListener(`click`, this._onMarkAsWatchedClick);
+    this._element.querySelectorAll(`.film-card__controls-item`).forEach((el) => {
+      el.addEventListener(`click`, this._onControlClick);
+    });
   }
 
   update(data) {

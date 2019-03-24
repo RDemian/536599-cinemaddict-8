@@ -226,22 +226,18 @@ const renderCardArray = (container, arr) => {
         Object.assign(currentData, newData);
         filmInstance.update(currentData);
       };
+      filmDetailInstance.onAddToFilterList = (filterName) => {
+        currentData[filterName] = !currentData[filterName];
+        filmInstance.update(currentData);
+        filmDetailInstance.updateData(currentData);
+      };
     };
     /* Добавление в списки фильтрации */
-    filmInstance.onAddToWatchList = () => {
-      currentData.inWatchList = !currentData.inWatchList;
+    filmInstance.onAddToFilterList = (filterName) => {
+      currentData[filterName] = !currentData[filterName];
       filmInstance.update(currentData);
       filmDetailInstance.updateData(currentData);
-      if (satisfyCurrentFilter(`inWatchList`) && !currentData.inWatchList) {
-        filmInstance.element.remove();
-        filmInstance.unrender();
-      }
-    };
-    filmInstance.onMarkAsWatched = () => {
-      currentData.isWatched = !currentData.isWatched;
-      filmInstance.update(currentData);
-      filmDetailInstance.updateData(currentData);
-      if (satisfyCurrentFilter(`isWatched`) && !currentData.inWatchList) {
+      if (satisfyCurrentFilter(filterName) && !currentData[filterName]) {
         filmInstance.element.remove();
         filmInstance.unrender();
       }
