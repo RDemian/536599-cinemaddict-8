@@ -10,8 +10,7 @@ const getRandomInt = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 const END_POINT = `https://es8-demo-srv.appspot.com/moowle`;
-//const AUTHORIZATION = `Basic eo0w590ik1111${getRandomInt(1, 9)}a`;
-const AUTHORIZATION = `Basic eo0w590ik11112a`;
+const AUTHORIZATION = `Basic eo0w590ik1111${getRandomInt(1, 9)}a`;
 const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
 
 /* Даныне для фильтров */
@@ -148,7 +147,7 @@ const renderCardArray = (container, arr) => {
         document.body.removeChild(filmDetailInstance.element);
         filmDetailInstance.unrender();
       };
-      filmDetailInstance.onCommentAdd = (newComment) => {
+      filmDetailInstance.onCommentAdd = (newComment, errorElement) => {
         currentData.comments.push(newComment);
         api.updateFilm({id: currentData.id, data: currentData.toRAW()})
           .then((newFilm) => {
@@ -156,11 +155,11 @@ const renderCardArray = (container, arr) => {
             filmInstance.update(newFilm);
           })
           .catch(() => {
-            filmDetailInstance.shake();
+            filmDetailInstance.addErrorStyle(errorElement);
             filmDetailInstance.commentsUpdate();
           });
       };
-      filmDetailInstance.onScoreChange = (newData) => {
+      filmDetailInstance.onScoreChange = (newData, errorElement) => {
         Object.assign(currentData, newData);
         api.updateFilm({id: currentData.id, data: currentData.toRAW()})
           .then(() => {
@@ -168,7 +167,7 @@ const renderCardArray = (container, arr) => {
             filmDetailInstance.scoreUpdate(newData);
           })
           .catch(() => {
-            filmDetailInstance.shake();
+            filmDetailInstance.addErrorStyle(errorElement);
             filmDetailInstance.scoreUpdate();
           });
       };

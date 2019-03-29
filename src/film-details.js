@@ -224,15 +224,18 @@ class filmDetails extends Component {
       if (newComment.text === ``) {
         return false;
       }
-      this.block(this._element.querySelector(`.film-details__comment-input`));
-      return (typeof this._onCommentAdd === `function`) && this._onCommentAdd(newComment);
+
+      let errorElement = this._element.querySelector(`.film-details__comment-input`);
+      this.block(errorElement);
+      return (typeof this._onCommentAdd === `function`) && this._onCommentAdd(newComment, errorElement);
     }
     return false;
   }
   /* Изменение оценки */
   _onScoreClick() {
     let formData = new FormData(this._element.querySelector(`.film-details__inner`));
-    this.block(this._element.querySelector(`.film-details__user-rating-score`));
+    let errorElement = this._element.querySelector(`.film-details__user-rating-score`);
+    this.block(errorElement);
     for (const pair of formData.entries()) {
       const [property, value] = pair;
       if (property === `score`) {
@@ -240,7 +243,7 @@ class filmDetails extends Component {
           score: value,
           rating: this._rating > value ? Math.round((this._rating - value / 10) * 10) / 10 : Math.round((this._rating + value / 10) * 10) / 10,
         };
-        return (typeof this._onScoreChange === `function`) && this._onScoreChange(newData);
+        return (typeof this._onScoreChange === `function`) && this._onScoreChange(newData, errorElement);
       }
     }
     return false;
@@ -312,6 +315,7 @@ class filmDetails extends Component {
     commentCtrl.value = ``;
     this.unblock(commentCtrl);
     this._element.querySelector(`.film-details__add-emoji-label`).textContent = `😐`;
+    this._element.querySelector(`#emoji-neutral-face`).checked = true;
   }
 
   scoreUpdate(newScore = null) {
@@ -324,7 +328,8 @@ class filmDetails extends Component {
     this.unblock(this._element.querySelector(`.film-details__user-rating-score`));
   }
 
-  shake() {
+  addErrorStyle(errorElement) {
+    errorElement.style.border = `1px solid red`;
     const ANIMATION_TIMEOUT = 600;
     this._element.style.animation = `shake ${ANIMATION_TIMEOUT / 1000}s`;
 
@@ -335,12 +340,11 @@ class filmDetails extends Component {
 
   block(elem) {
     elem.disabled = true;
-    elem.style = `opacity: 0.8; border: 1px solid red;`;
+    elem.style = `border: none;`;
   }
 
   unblock(elem) {
     elem.disabled = false;
-    elem.style = `opacity: 1; border: none;`;
   }
 
   static convertCommentData(formData) {
