@@ -10,7 +10,8 @@ const getRandomInt = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 const END_POINT = `https://es8-demo-srv.appspot.com/moowle`;
-const AUTHORIZATION = `Basic eo0w590ik1111${getRandomInt(1, 9)}a`;
+//const AUTHORIZATION = `Basic eo0w590ik1111${getRandomInt(1, 9)}a`;
+const AUTHORIZATION = `Basic eo0w590ik11112a`;
 const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
 
 /* Даныне для фильтров */

@@ -43,6 +43,23 @@ class ModelFilm {
         'watchlist': this.inWatchList,
         'already_watched': this.isWatched,
         'favorite': this.isFavorite
+      },
+      'film_info': {
+        'title': this.title,
+        'alternative_title': this.original,
+        'total_rating': this.rating,
+        'poster': this.poster,
+        'age_rating': this.age,
+        'director': this.director,
+        'writers': this.writers,
+        'actors': this.actors,
+        'release': {
+          'date': this.year.getTime(),
+          'release_country': this.country
+        },
+        'runtime': this.duration,
+        'genre': this.genre,
+        'description': this.description,
       }
     };
   }
