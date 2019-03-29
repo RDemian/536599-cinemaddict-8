@@ -2,11 +2,17 @@ import FilmDetails from './film-details.js';
 import Film from './film.js';
 import Filter from './filter.js';
 import Statistic from './statistic.js';
+import API from './api.js';
+
 
 /* случайное целое число в диапазоне */
 const getRandomInt = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
+const END_POINT = `https://es8-demo-srv.appspot.com/moowle`;
+const AUTHORIZATION = `Basic eo0w590ik1111${getRandomInt(1, 9)}a`;
+const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
+
 /* Даныне для фильтров */
 const filterDataArray = [
   {
@@ -38,83 +44,6 @@ const createFilteredArray = (filterName, arr) => {
 
   const filteredArray = arr.filter(mapper[filterName]);
   return filteredArray;
-};
-/* Генерация массива карточек filmArray */
-const getObjComment = () => {
-  return {
-    emoji: [`sleeping`, `neutral-face`, `grinning`][Math.floor(Math.random() * 3)],
-    text: [
-      `Cras aliquet varius magna, non porta ligula feugiat eget.`,
-      `Fusce tristique felis at fermentum pharetra.`,
-      `Nullam nunc ex, convallis sed finibus eget, sollicitudin eget ante.`,
-      `Phasellus eros mauris, condimentum sed nibh vitae, sodales efficitur ipsum.`,
-      `Sed blandit, eros vel aliquam faucibus, purus ex euismod diam, eu luctus nunc ante ut dui.`,
-      `Sed sed nisi sed augue convallis suscipit in sed felis.`,
-      `Aliquam erat volutpat.`,
-      `Nunc fermentum tortor ac porta dapibus.`,
-      `In rutrum ac purus sit amet tempus.`
-    ].filter(() => [true, false][Math.floor(Math.random() * 2)]).slice(0, getRandomInt(1, 2)).join(` `),
-    auth: [
-      `Ваня`,
-      `Петя`,
-      `Федя`][Math.floor(Math.random() * 3)],
-    date: new Date(2005, 11, 12),
-  };
-};
-
-const createFilmArray = (count) => {
-  const filmArray = [];
-  for (let i = 0; i < count; i += 1) {
-    const dataObj = {};
-    dataObj.title = [
-      `Accused`,
-      `Blackmail`,
-      `Blue blazers`,
-      `Fuga da New-york`,
-      `Moonrise`,
-      `Three friends`][Math.floor(Math.random() * 6)];
-    dataObj.rating = getRandomInt(1, 9) + getRandomInt(1, 9) / 10;
-    dataObj.score = getRandomInt(1, 9);
-    dataObj.year = new Date([
-      2016,
-      2017,
-      2018][Math.floor(Math.random() * 3)], getRandomInt(0, 11), getRandomInt(0, 28));
-    dataObj.duration = getRandomInt(60, 110);
-    dataObj.genre = new Array(1).fill().map(() => [`Sci-Fi`, `Animation`, `Fantasy`, `Comedy`, `TV Series`][Math.floor(Math.random() * 3)]);
-    dataObj.poster = `${[
-      `accused`,
-      `blackmail`,
-      `blue-blazes`,
-      `fuga-da-new-york`,
-      `moonrise`,
-      `three-friends`][Math.floor(Math.random() * 6)]}.jpg`;
-    dataObj.description = [
-      `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras aliquet varius magna, non porta ligula feugiat eget.`,
-      `Fusce tristique felis at fermentum pharetra. Aliquam id orci ut lectus varius viverra.`,
-      `Nullam nunc ex, convallis sed finibus eget, sollicitudin eget ante.`,
-      `Phasellus eros mauris, condimentum sed nibh vitae, sodales efficitur ipsum.`,
-      `Sed blandit, eros vel aliquam faucibus, purus ex euismod diam, eu luctus nunc ante ut dui.`,
-      `Sed sed nisi sed augue convallis suscipit in sed felis.`,
-      `Aliquam erat volutpat.`,
-      `Nunc fermentum tortor ac porta dapibus.`,
-      `In rutrum ac purus sit amet tempus.`
-    ].filter(() => [true, false][Math.floor(Math.random() * 1.9)]).slice(0, getRandomInt(1, 3));
-    dataObj.comments = new Array(getRandomInt(1, 3)).fill().map(() => getObjComment());
-    dataObj.age = getRandomInt(0, 18);
-    dataObj.original = [
-      `Обвиняемый`,
-      `Черное письмо`,
-      `Голубые пиджаки`,
-      `Фуга Нью-Йорк`,
-      `Восход луны`,
-      `Три друга`][Math.floor(Math.random() * 6)];
-    dataObj.inWatchList = [true, false][Math.floor(Math.random() * 1.9)];
-    dataObj.isWatched = [true, false][Math.floor(Math.random() * 1.9)];
-    dataObj.isFavorite = [true, false][Math.floor(Math.random() * 1.9)];
-
-    filmArray.push(dataObj);
-  }
-  return filmArray;
 };
 /* Подготовка данных для блока статистики */
 const getStaticData = () => {
@@ -163,7 +92,7 @@ const satisfyCurrentFilter = (name) => {
 };
 
 /* Основной модуль */
-const filmArray = createFilmArray(5);
+let filmArray;
 const filmListContainer = document.querySelector(`.films-list .films-list__container`);
 const filmListExtraContainers = document.querySelectorAll(`.films-list--extra .films-list__container`);
 const filterContainer = document.querySelector(`.main-navigation`);
@@ -220,11 +149,27 @@ const renderCardArray = (container, arr) => {
       };
       filmDetailInstance.onCommentAdd = (newComment) => {
         currentData.comments.push(newComment);
-        filmInstance.update(currentData);
+        api.updateFilm({id: currentData.id, data: currentData.toRAW()})
+          .then((newFilm) => {
+            filmDetailInstance.commentsUpdate(newComment);
+            filmInstance.update(newFilm);
+          })
+          .catch(() => {
+            filmDetailInstance.shake();
+            filmDetailInstance.commentsUpdate();
+          });
       };
       filmDetailInstance.onScoreChange = (newData) => {
         Object.assign(currentData, newData);
-        filmInstance.update(currentData);
+        api.updateFilm({id: currentData.id, data: currentData.toRAW()})
+          .then(() => {
+            filmInstance.update(currentData);
+            filmDetailInstance.scoreUpdate(newData);
+          })
+          .catch(() => {
+            filmDetailInstance.shake();
+            filmDetailInstance.scoreUpdate();
+          });
       };
       filmDetailInstance.onAddToFilterList = (filterName) => {
         currentData[filterName] = !currentData[filterName];
@@ -245,13 +190,23 @@ const renderCardArray = (container, arr) => {
   }
 };
 
-renderCardArray(filmListContainer, filmArray);
-document.querySelector(`.main-navigation__item--additional`).addEventListener(`click`, renderStatistic);
-renderFilter(filterContainer, filterDataArray);
+filmListContainer.textContent = `Loading movies...`;
+
+api.getFilm()
+  .then((moovies) => {
+    filmListContainer.textContent = ``;
+    renderCardArray(filmListContainer, moovies);
+    document.querySelector(`.main-navigation__item--additional`).addEventListener(`click`, renderStatistic);
+    renderFilter(filterContainer, filterDataArray);
 
 
-for (let container of filmListExtraContainers) {
-  const extraFilmArray = Array.from(filmArray);
-  extraFilmArray.length = 2;
-  renderCardArray(container, extraFilmArray);
-}
+    for (let container of filmListExtraContainers) {
+      const extraFilmArray = Array.from(moovies);
+      extraFilmArray.length = 2;
+      renderCardArray(container, extraFilmArray);
+    }
+  })
+  .catch(() => {
+    filmListContainer.textContent = `Something went wrong while loading movies. Check your connection or try again later`;
+  });
+

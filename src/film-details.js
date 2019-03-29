@@ -13,6 +13,10 @@ class filmDetails extends Component {
     this._year = data.year;
     this._duration = data.duration;
     this._genre = data.genre;
+    this._actors = data.actors;
+    this._director = data.director;
+    this._writers = data.writers;
+    this._country = data.country;
     this._poster = data.poster;
     this._description = data.description;
     this._comments = Array.from(data.comments);
@@ -47,7 +51,7 @@ class filmDetails extends Component {
         </div>
         <div class="film-details__info-wrap">
           <div class="film-details__poster">
-            <img class="film-details__poster-img" src="images/posters/${this._poster}" alt="incredables-2">
+            <img class="film-details__poster-img" src="${this._poster}" alt="incredables-2">
 
             <p class="film-details__age">${this._age}+</p>
           </div>
@@ -68,19 +72,19 @@ class filmDetails extends Component {
             <table class="film-details__table">
               <tr class="film-details__row">
                 <td class="film-details__term">Director</td>
-                <td class="film-details__cell">Brad Bird</td>
+                <td class="film-details__cell">${this._director}</td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Writers</td>
-                <td class="film-details__cell">Brad Bird</td>
+                <td class="film-details__cell">${this._writers.join(`, `)}</td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Actors</td>
-                <td class="film-details__cell">Samuel L. Jackson, Catherine Keener, Sophia Bush</td>
+                <td class="film-details__cell">${this._actors.join(`, `)}</td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Release Date</td>
-                <td class="film-details__cell">${moment(this._year).format(`DD MMMM YYYY`)} (USA)</td>
+                <td class="film-details__cell">${moment(this._year).format(`DD MMMM YYYY`)} (${this._country})</td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Runtime</td>
@@ -88,7 +92,7 @@ class filmDetails extends Component {
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Country</td>
-                <td class="film-details__cell">USA</td>
+                <td class="film-details__cell">${this._country}</td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Genres</td>
@@ -216,14 +220,11 @@ class filmDetails extends Component {
     if (evt.keyCode === KEY_ENTER_CODE && evt.ctrlKey) {
       evt.preventDefault();
       let formData = new FormData(this._element.querySelector(`.film-details__inner`));
-      this._element.querySelector(`.film-details__comment-input`).value = ``;
-      this._element.querySelector(`.film-details__add-emoji-label`).textContent = `😐`;
       let newComment = filmDetails.convertCommentData(formData);
-      this._comments.push(newComment);
       if (newComment.text === ``) {
         return false;
       }
-      this._commentsUpdate();
+      this.block(this._element.querySelector(`.film-details__comment-input`));
       return (typeof this._onCommentAdd === `function`) && this._onCommentAdd(newComment);
     }
     return false;
@@ -231,16 +232,13 @@ class filmDetails extends Component {
   /* Изменение оценки */
   _onScoreClick() {
     let formData = new FormData(this._element.querySelector(`.film-details__inner`));
+    this.block(this._element.querySelector(`.film-details__user-rating-score`));
     for (const pair of formData.entries()) {
       const [property, value] = pair;
       if (property === `score`) {
-        this._score = value;
-        this._rating = this._rating > value ? Math.round((this._rating - value / 10) * 10) / 10 : Math.round((this._rating + value / 10) * 10) / 10;
-        this._element.querySelector(`.film-details__total-rating`).textContent = this._rating;
-        this._element.querySelector(`.film-details__user-rating`).textContent = `Your rate ${this._score}`;
         let newData = {
-          score: this._score,
-          rating: this._rating,
+          score: value,
+          rating: this._rating > value ? Math.round((this._rating - value / 10) * 10) / 10 : Math.round((this._rating + value / 10) * 10) / 10,
         };
         return (typeof this._onScoreChange === `function`) && this._onScoreChange(newData);
       }
@@ -302,11 +300,47 @@ class filmDetails extends Component {
     this._isFavorite = data.isFavorite;
   }
 
-  _commentsUpdate() {
-    let newDomElement = createDomElement(this.template);
-    newDomElement = newDomElement.querySelector(`.film-details__comments-list .film-details__comment:last-of-type`);
-    this._element.querySelector(`.film-details__comments-list`).appendChild(newDomElement);
-    this._element.querySelector(`.film-details__comments-count`).textContent = this._comments.length;
+  commentsUpdate(newComment = null) {
+    if (newComment) {
+      this._comments.push(newComment);
+      let newDomElement = createDomElement(this.template);
+      newDomElement = newDomElement.querySelector(`.film-details__comments-list .film-details__comment:last-of-type`);
+      this._element.querySelector(`.film-details__comments-list`).appendChild(newDomElement);
+      this._element.querySelector(`.film-details__comments-count`).textContent = this._comments.length;
+    }
+    let commentCtrl = this._element.querySelector(`.film-details__comment-input`);
+    commentCtrl.value = ``;
+    this.unblock(commentCtrl);
+    this._element.querySelector(`.film-details__add-emoji-label`).textContent = `😐`;
+  }
+
+  scoreUpdate(newScore = null) {
+    if (newScore) {
+      this._rating = newScore.rating;
+      this._score = newScore.score;
+      this._element.querySelector(`.film-details__total-rating`).textContent = this._rating;
+      this._element.querySelector(`.film-details__user-rating`).textContent = `Your rate ${this._score}`;
+    }
+    this.unblock(this._element.querySelector(`.film-details__user-rating-score`));
+  }
+
+  shake() {
+    const ANIMATION_TIMEOUT = 600;
+    this._element.style.animation = `shake ${ANIMATION_TIMEOUT / 1000}s`;
+
+    setTimeout(() => {
+      this._element.style.animation = ``;
+    }, ANIMATION_TIMEOUT);
+  }
+
+  block(elem) {
+    elem.disabled = true;
+    elem.style = `opacity: 0.8; border: 1px solid red;`;
+  }
+
+  unblock(elem) {
+    elem.disabled = false;
+    elem.style = `opacity: 1; border: none;`;
   }
 
   static convertCommentData(formData) {

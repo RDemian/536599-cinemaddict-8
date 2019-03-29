@@ -36,7 +36,7 @@ class Film extends Component {
     </br>
     ${this._genre.map((el) => `<span class="film-details__genre">${el}</span>`).join(` `)}
     </p>
-    <img src="./images/posters/${this._poster}" alt="" class="film-card__poster">
+    <img src="${this._poster}" alt="" class="film-card__poster">
     <p class="film-card__description">${this._description}</p>
     <button class="film-card__comments">${this._comments.length} comments</button>
 
