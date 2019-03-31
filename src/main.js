@@ -3,6 +3,8 @@ import Film from './film.js';
 import Filter from './filter.js';
 import Statistic from './statistic.js';
 import API from './api.js';
+import Store from './store';
+import Provider from './provider';
 
 
 /* случайное целое число в диапазоне */
@@ -12,6 +14,17 @@ const getRandomInt = (min, max) => {
 const END_POINT = `https://es8-demo-srv.appspot.com/moowle`;
 const AUTHORIZATION = `Basic eo0w590ik1111${getRandomInt(1, 9)}a`;
 const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
+const FILMS_STORE_KEY = `films-store-key`;
+const store = new Store({key: FILMS_STORE_KEY, storage: localStorage});
+const provider = new Provider({api, store, generateId: () => String(Date.now())});
+
+window.addEventListener(`offline`, () => {
+  document.title = `${document.title}[OFFLINE]`;
+});
+window.addEventListener(`online`, () => {
+  document.title = document.title.split(`[OFFLINE]`)[0];
+  provider.syncFilms();
+});
 
 /* Даныне для фильтров */
 const filterDataArray = [
@@ -149,7 +162,7 @@ const renderCardArray = (container, arr) => {
       };
       filmDetailInstance.onCommentAdd = (newComment, errorElement) => {
         currentData.comments.push(newComment);
-        api.updateFilm({id: currentData.id, data: currentData.toRAW()})
+        provider.updateFilm({id: currentData.id, data: currentData.toRAW()})
           .then((newFilm) => {
             filmDetailInstance.commentsUpdate(newComment);
             filmInstance.update(newFilm);
@@ -161,7 +174,7 @@ const renderCardArray = (container, arr) => {
       };
       filmDetailInstance.onScoreChange = (newData, errorElement) => {
         Object.assign(currentData, newData);
-        api.updateFilm({id: currentData.id, data: currentData.toRAW()})
+        provider.updateFilm({id: currentData.id, data: currentData.toRAW()})
           .then(() => {
             filmInstance.update(currentData);
             filmDetailInstance.scoreUpdate(newData);
@@ -192,16 +205,16 @@ const renderCardArray = (container, arr) => {
 
 filmListContainer.textContent = `Loading movies...`;
 
-api.getFilm()
-  .then((moovies) => {
+provider.getFilms()
+  .then((movies) => {
+    filmArray = movies;
     filmListContainer.textContent = ``;
-    renderCardArray(filmListContainer, moovies);
+    renderCardArray(filmListContainer, movies);
     document.querySelector(`.main-navigation__item--additional`).addEventListener(`click`, renderStatistic);
     renderFilter(filterContainer, filterDataArray);
 
-
     for (let container of filmListExtraContainers) {
-      const extraFilmArray = Array.from(moovies);
+      const extraFilmArray = Array.from(movies);
       extraFilmArray.length = 2;
       renderCardArray(container, extraFilmArray);
     }

@@ -17,7 +17,7 @@ class API {
     this._authorization = authorization;
   }
 
-  getFilm() {
+  getFilms() {
     return this._load({url: `movies`})
       .then(toJSON)
       .then((ert)=>{
@@ -49,6 +49,16 @@ class API {
       .catch((err) => {
         throw err;
       });
+  }
+
+  syncFilms(films) {
+    return this._load({
+      url: `movies/sync`,
+      method: `POST`,
+      body: JSON.stringify(films),
+      headers: new Headers({'Content-Type': `application/json`})
+    })
+      .then(toJSON);
   }
 }
 
