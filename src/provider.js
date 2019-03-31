@@ -13,7 +13,7 @@ class Provider {
   }
 
   getFilms() {
-    if (this._isOnline) {
+    if (this._isOnline()) {
       return this._api.getFilms()
         .then((films) => {
           films.map((it) => this._store.setItem({key: it.id, item: it.toRAW()}));
@@ -28,7 +28,7 @@ class Provider {
   }
 
   updateFilm({id, data}) {
-    if (this._isOnline) {
+    if (this._isOnline()) {
       return this._api.updateFilm({id, data})
       .then((film) => {
         this._store.setItem({key: film.id, item: film.toRAW()});
