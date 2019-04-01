@@ -54,7 +54,7 @@ class API {
   syncFilms(films) {
     return this._load({
       url: `movies/sync`,
-      method: `POST`,
+      method: Method.POST,
       body: JSON.stringify(films),
       headers: new Headers({'Content-Type': `application/json`})
     })

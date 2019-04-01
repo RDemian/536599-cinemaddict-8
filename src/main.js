@@ -63,7 +63,7 @@ const getStaticData = () => {
   const staticData = {
     youWatched: 0,
     duration: 0,
-    chartData: {},
+    chartData: new Map(),
     topGenre: ``,
   };
 
@@ -72,23 +72,25 @@ const getStaticData = () => {
       staticData.youWatched += 1;
       staticData.duration += el.duration;
 
-      if (Object.is(staticData.chartData[el.genre], undefined)) {
-        staticData.chartData[el.genre] = 1;
-      } else {
+      if (staticData.chartData.has(el.genre)) {
         staticData.chartData[el.genre] += 1;
+      } else {
+        staticData.chartData[el.genre] = 1;
       }
     }
   });
 
-  staticData.topGenre = Object.entries(staticData.chartData);
-  staticData.topGenre = staticData.topGenre.reduce((maxEl, el) => {
-    /* el содержит массив вида ['genre', count] */
-    if (el[1] > maxEl[1]) {
-      maxEl = el;
-    }
-    return maxEl;
-  });
-  staticData.topGenre = staticData.topGenre[0];
+  if (staticData.chartData.length > 0) {
+    staticData.topGenre = Object.entries(staticData.chartData);
+    staticData.topGenre = staticData.topGenre.reduce((maxEl, el) => {
+      /* el содержит массив вида ['genre', count] */
+      if (el[1] > maxEl[1]) {
+        maxEl = el;
+      }
+      return maxEl;
+    });
+    staticData.topGenre = staticData.topGenre[0];
+  }
   return staticData;
 };
 

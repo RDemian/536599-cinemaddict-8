@@ -30,6 +30,7 @@ class ModelFilm {
 
   toRAW() {
     return {
+      'id': this.id,
       'comments': this.comments.map((el) => {
         return {
           emotion: el.emoji,

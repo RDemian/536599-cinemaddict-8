@@ -43,7 +43,7 @@ class Provider {
   }
 
   syncFilms() {
-    return this._api.syncFilms({films: objectToArray(this._store.getAll())});
+    return this._api.syncFilms(objectToArray(this._store.getAll()));
   }
 
   _isOnline() {
