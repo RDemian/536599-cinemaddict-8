@@ -66,5 +66,14 @@
 </footer>
 
 <script src="bundle.js"></script>
+<script>
+  navigator.serviceWorker.register("./sw.js")
+    .then((req) => {
+      console.log(`Registration success, scope is ${req.scope}`);
+    })
+    .catch((error) => {
+      console.log(`Registration error ${error}`);
+    });
+</script>
 </body>
 </html>
