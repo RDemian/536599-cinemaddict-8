@@ -72,9 +72,9 @@ class Statistic extends Component {
       plugins: [ChartDataLabels],
       type: `horizontalBar`,
       data: {
-        labels: Object.keys(this._chartData),
+        labels: Array.from(this._chartData.keys()),
         datasets: [{
-          data: Object.values(this._chartData),
+          data: Array.from(this._chartData.values()),
           backgroundColor: `#ffe800`,
           hoverBackgroundColor: `#ffe800`,
           anchor: `start`

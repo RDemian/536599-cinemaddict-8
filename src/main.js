@@ -52,7 +52,7 @@ const createFilteredArray = (filterName, arr) => {
     'all-movies': () => true,
     'watchlist': (item) => item.inWatchList,
     'history': (item) => item.isWatched,
-    'favorites': (item) => item.isFavorites,
+    'favorites': (item) => item.isFavorite,
   };
 
   const filteredArray = arr.filter(mapper[filterName]);
@@ -72,16 +72,18 @@ const getStaticData = () => {
       staticData.youWatched += 1;
       staticData.duration += el.duration;
 
-      if (staticData.chartData.has(el.genre)) {
-        staticData.chartData[el.genre] += 1;
+      let mapKey = el.genre.join(`, `);
+
+      if (staticData.chartData.has(mapKey)) {
+        staticData.chartData.set(mapKey, staticData.chartData.get(mapKey) + 1);
       } else {
-        staticData.chartData[el.genre] = 1;
+        staticData.chartData.set(mapKey, 1);
       }
     }
   });
 
-  if (staticData.chartData.length > 0) {
-    staticData.topGenre = Object.entries(staticData.chartData);
+  if (staticData.chartData.size > 0) {
+    staticData.topGenre = Array.from(staticData.chartData.entries());
     staticData.topGenre = staticData.topGenre.reduce((maxEl, el) => {
       /* el содержит массив вида ['genre', count] */
       if (el[1] > maxEl[1]) {
@@ -109,7 +111,6 @@ const satisfyCurrentFilter = (name) => {
 /* Основной модуль */
 let filmArray;
 const filmListContainer = document.querySelector(`.films-list .films-list__container`);
-const filmListExtraContainers = document.querySelectorAll(`.films-list--extra .films-list__container`);
 const filterContainer = document.querySelector(`.main-navigation`);
 const mainContainer = document.body.querySelector(`main`);
 
@@ -209,17 +210,20 @@ filmListContainer.textContent = `Loading movies...`;
 
 provider.getFilms()
   .then((movies) => {
-    filmArray = movies;
+    filmArray = Array.from(movies);
     filmListContainer.textContent = ``;
     renderCardArray(filmListContainer, movies);
     document.querySelector(`.main-navigation__item--additional`).addEventListener(`click`, renderStatistic);
     renderFilter(filterContainer, filterDataArray);
 
-    for (let container of filmListExtraContainers) {
-      const extraFilmArray = Array.from(movies);
-      extraFilmArray.length = 2;
-      renderCardArray(container, extraFilmArray);
-    }
+    const topRated = document.querySelector(`#top-rated-container`);
+    const mostComented = document.querySelector(`#most-commented-container`);
+
+    filmArray.sort((a, b) => a.rating < b.rating ? 1 : -1);
+    renderCardArray(topRated, [filmArray[0], filmArray[1]]);
+    filmArray.sort((a, b) => a.comments.length < b.comments.length ? 1 : -1);
+    renderCardArray(mostComented, [filmArray[0], filmArray[1]]);
+
   })
   .catch(() => {
     filmListContainer.textContent = `Something went wrong while loading movies. Check your connection or try again later`;
