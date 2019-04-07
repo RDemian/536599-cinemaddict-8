@@ -5,6 +5,7 @@ import Statistic from './statistic.js';
 import API from './api.js';
 import Store from './store';
 import Provider from './provider';
+import Search from './search.js';
 
 
 /* случайное целое число в диапазоне */
@@ -107,6 +108,14 @@ const satisfyCurrentFilter = (name) => {
   };
   return mapper[name] === currentFilterName;
 };
+/* Массив для поиска */
+const createSearchArray = (searchValue, arr) => {
+  const searchArray = arr.filter((el) => {
+    return ~el.title.toLowerCase().indexOf(searchValue.toLowerCase());
+  });
+
+  return searchArray;
+};
 
 /* Основной модуль */
 let filmArray;
@@ -114,6 +123,21 @@ const filmListContainer = document.querySelector(`.films-list .films-list__conta
 const filterContainer = document.querySelector(`.main-navigation`);
 const mainContainer = document.body.querySelector(`main`);
 
+/* Рендер строки поиска*/
+const renderSearch = () => {
+  const searchInstance = new Search();
+  const domEl = searchInstance.render();
+  const delayTime = 1600;
+  let timerId;
+  searchInstance.onFilmSearch = (searchValue) => {
+    clearTimeout(timerId);
+    searchInstance.searchAnimation(delayTime);
+    timerId = setTimeout(() => {
+      renderCardArray(filmListContainer, createSearchArray(searchValue, filmArray));
+    }, delayTime);
+  };
+  return domEl;
+};
 /* Рендер статистики*/
 const renderStatistic = () => {
   const statisticInstance = new Statistic(getStaticData());
@@ -167,12 +191,25 @@ const renderCardArray = (container, arr) => {
         currentData.comments.push(newComment);
         provider.updateFilm({id: currentData.id, data: currentData.toRAW()})
           .then((newFilm) => {
-            filmDetailInstance.commentsUpdate(newComment);
+            filmDetailInstance.commentsUpdate(currentData.comments);
+            filmDetailInstance.displayUndoBtn();
             filmInstance.update(newFilm);
           })
           .catch(() => {
             filmDetailInstance.addErrorStyle(errorElement);
             filmDetailInstance.commentsUpdate();
+          });
+      };
+      filmDetailInstance.onCommentRemove = (errorElement) => {
+        currentData.comments.pop();
+        provider.updateFilm({id: currentData.id, data: currentData.toRAW()})
+          .then((newFilm) => {
+            filmDetailInstance.commentsUpdate(currentData.comments);
+            filmDetailInstance.hideUndoBtn();
+            filmInstance.update(newFilm);
+          })
+          .catch(() => {
+            filmDetailInstance.addErrorStyle(errorElement);
           });
       };
       filmDetailInstance.onScoreChange = (newData, errorElement) => {
@@ -214,6 +251,7 @@ provider.getFilms()
     filmListContainer.textContent = ``;
     renderCardArray(filmListContainer, movies);
     document.querySelector(`.main-navigation__item--additional`).addEventListener(`click`, renderStatistic);
+    document.querySelector(`.header__logo`).after(renderSearch());
     renderFilter(filterContainer, filterDataArray);
 
     const topRated = document.querySelector(`#top-rated-container`);

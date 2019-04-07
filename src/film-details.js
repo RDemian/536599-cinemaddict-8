@@ -33,6 +33,9 @@ class filmDetails extends Component {
     this._onCommentAdd = null;
     this._onCommentKeyDown = this._onCommentKeyDown.bind(this);
 
+    this._onCommentRemove = null;
+    this._onUndoBtnClick = this._onUndoBtnClick.bind(this);
+
     this._onScoreChange = null;
     this._onScoreClick = this._onScoreClick.bind(this);
 
@@ -160,8 +163,8 @@ class filmDetails extends Component {
 
         <section class="film-details__user-rating-wrap">
           <div class="film-details__user-rating-controls">
-            <span class="film-details__watched-status film-details__watched-status--active">Already watched</span>
-            <button class="film-details__watched-reset" type="button">undo</button>
+            <span class="film-details__watched-status film-details__watched-status--active"></span>
+            <button class="film-details__watched-reset visually-hidden" type="button">undo</button>
           </div>
 
           <div class="film-details__user-score">
@@ -186,7 +189,6 @@ class filmDetails extends Component {
     `.trim();
   }
 
-  /* Закрытие попапа */
   set onDetailsClose(fn) {
     this._onDetailsClose = fn;
   }
@@ -196,10 +198,13 @@ class filmDetails extends Component {
   set onCommentAdd(fn) {
     this._onCommentAdd = fn;
   }
+  set onCommentRemove(fn) {
+    this._onCommentRemove = fn;
+  }
   set onScoreChange(fn) {
     this._onScoreChange = fn;
   }
-
+  /* Закрытие попапа */
   _onCloseClick(evt) {
     evt.preventDefault();
     return (typeof this._onDetailsClose === `function`) && this._onDetailsClose();
@@ -219,17 +224,23 @@ class filmDetails extends Component {
   _onCommentKeyDown(evt) {
     if (evt.keyCode === KEY_ENTER_CODE && evt.ctrlKey) {
       evt.preventDefault();
-      let formData = new FormData(this._element.querySelector(`.film-details__inner`));
-      let newComment = filmDetails.convertCommentData(formData);
+      const formData = new FormData(this._element.querySelector(`.film-details__inner`));
+      const newComment = filmDetails.convertCommentData(formData);
       if (newComment.text === ``) {
         return false;
       }
 
-      let errorElement = this._element.querySelector(`.film-details__comment-input`);
+      const errorElement = this._element.querySelector(`.film-details__comment-input`);
       this.block(errorElement);
       return (typeof this._onCommentAdd === `function`) && this._onCommentAdd(newComment, errorElement);
     }
     return false;
+  }
+  /* Удаление комментариев */
+  _onUndoBtnClick(evt) {
+    evt.preventDefault();
+    const errorElement = this._element.querySelector(`.film-details__user-rating-controls`);
+    return (typeof this._onCommentRemove === `function`) && this._onCommentRemove(errorElement);
   }
   /* Изменение оценки */
   _onScoreClick() {
@@ -303,12 +314,13 @@ class filmDetails extends Component {
     this._isFavorite = data.isFavorite;
   }
 
-  commentsUpdate(newComment = null) {
-    if (newComment) {
-      this._comments.push(newComment);
+  commentsUpdate(newComments = null) {
+    if (newComments) {
+      this._comments = Array.from(newComments);
+      const commentsWrap = this._element.querySelector(`.film-details__comments-wrap`);
       let newDomElement = createDomElement(this.template);
-      newDomElement = newDomElement.querySelector(`.film-details__comments-list .film-details__comment:last-of-type`);
-      this._element.querySelector(`.film-details__comments-list`).appendChild(newDomElement);
+      newDomElement = newDomElement.querySelector(`.film-details__comments-list`);
+      commentsWrap.replaceChild(newDomElement, this._element.querySelector(`.film-details__comments-list`));
       this._element.querySelector(`.film-details__comments-count`).textContent = this._comments.length;
     }
     let commentCtrl = this._element.querySelector(`.film-details__comment-input`);
@@ -316,6 +328,22 @@ class filmDetails extends Component {
     this.unblock(commentCtrl);
     this._element.querySelector(`.film-details__add-emoji-label`).textContent = `😐`;
     this._element.querySelector(`#emoji-neutral-face`).checked = true;
+  }
+
+  displayUndoBtn() {
+    const undoBtn = this._element.querySelector(`.film-details__watched-reset`);
+    const watchStatus = this._element.querySelector(`.film-details__watched-status`);
+    watchStatus.textContent = `Comment added`;
+    undoBtn.classList.remove(`visually-hidden`);
+    undoBtn.addEventListener(`click`, this._onUndoBtnClick);
+  }
+
+  hideUndoBtn() {
+    const undoBtn = this._element.querySelector(`.film-details__watched-reset`);
+    const watchStatus = this._element.querySelector(`.film-details__watched-status`);
+    watchStatus.textContent = `Comment deleted`;
+    undoBtn.classList.add(`visually-hidden`);
+    undoBtn.removeEventListener(`click`, this._onUndoBtnClick);
   }
 
   scoreUpdate(newScore = null) {
