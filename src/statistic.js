@@ -1,18 +1,20 @@
 import Component from './component';
+import createDomElement from './create-dom-element';
 import moment from 'moment';
 import 'moment-duration-format';
-moment.locale(`ru`);
 import Chart from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 class Statistic extends Component {
-  constructor(data) {
+  constructor(filmArray) {
     super();
-    this._youWatched = data.youWatched;
-    this._duration = data.duration;
-    this._topGenre = data.topGenre;
-    this._chartData = data.chartData;
-
+    this._filmArray = filmArray;
+    this._youWatched = null;
+    this._duration = null;
+    this._topGenre = null;
+    this._chartData = null;
     this._myChart = null;
+
+    this._onFilterChange = this._onFilterChange.bind(this);
   }
 
   get template() {
@@ -67,7 +69,7 @@ class Statistic extends Component {
     const statisticCtx = this._element.querySelector(`.statistic__chart`);
 
     const BAR_HEIGHT = 50;
-    statisticCtx.height = BAR_HEIGHT * 5;
+    statisticCtx.height = BAR_HEIGHT * this._chartData.size;
     const myChart = new Chart(statisticCtx, {
       plugins: [ChartDataLabels],
       type: `horizontalBar`,
@@ -127,8 +129,76 @@ class Statistic extends Component {
 
     return myChart;
   }
+  /* Подготовка данных для блока статистики */
+  _getStaticData(arr) {
+    const staticData = {
+      youWatched: 0,
+      duration: 0,
+      chartData: new Map(),
+      topGenre: ``,
+    };
+
+    arr.forEach((el) => {
+      if (el.isWatched) {
+        staticData.youWatched += 1;
+        staticData.duration += el.duration;
+
+        let mapKey = el.genre.join(`, `);
+
+        if (staticData.chartData.has(mapKey)) {
+          staticData.chartData.set(mapKey, staticData.chartData.get(mapKey) + 1);
+        } else {
+          staticData.chartData.set(mapKey, 1);
+        }
+      }
+    });
+
+    if (staticData.chartData.size > 0) {
+      staticData.topGenre = Array.from(staticData.chartData.entries());
+      staticData.topGenre = staticData.topGenre.reduce((maxEl, el) => {
+        /* el содержит массив вида ['genre', count] */
+        if (el[1] > maxEl[1]) {
+          maxEl = el;
+        }
+        return maxEl;
+      });
+      staticData.topGenre = staticData.topGenre[0];
+    }
+
+    this._youWatched = staticData.youWatched;
+    this._duration = staticData.duration;
+    this._topGenre = staticData.topGenre;
+    this._chartData = staticData.chartData;
+  }
+
+  _getFilterArray(filterName) {
+
+    if (filterName === `all-time`) {
+      return this._filmArray;
+    }
+
+    const mapPeriod = {
+      today: `days`,
+      week: `weeks`,
+      month: `months`,
+      year: `years`,
+    };
+
+    const backDate = moment(new Date()).add(-1, mapPeriod[filterName]);
+
+    return this._filmArray.filter((el) => {
+      return el.watchingDate >= backDate;
+    });
+  }
+
+  _updateTextList() {
+    let newList = createDomElement(this.template);
+    newList = newList.querySelector(`.statistic__text-list`);
+    this._element.replaceChild(newList, this._element.querySelector(`.statistic__text-list`));
+  }
 
   render() {
+    this._getStaticData(this._filmArray);
     super.render();
     this._myChart = this._initChart();
     return this._element;
@@ -137,6 +207,28 @@ class Statistic extends Component {
   unrender() {
     super.unrender();
     this._myChart = null;
+  }
+
+  _onFilterChange(evt) {
+    evt.preventDefault();
+    const filterName = evt.target.value;
+    const filterArr = this._getFilterArray(filterName);
+    this._getStaticData(filterArr);
+    this._myChart = null;
+    this._myChart = this._initChart();
+    this._updateTextList();
+  }
+
+  bind() {
+    this._element.querySelectorAll(`.statistic__filters-input`).forEach((el) => {
+      el.addEventListener(`change`, this._onFilterChange);
+    });
+  }
+
+  unbind() {
+    this._element.querySelectorAll(`.statistic__filters-input`).forEach((el) => {
+      el.removeEventListener(`change`, this._onFilterChange);
+    });
   }
 }
 

@@ -25,6 +25,7 @@ class ModelFilm {
     this.score = data.user_details.personal_rating;
     this.inWatchList = data.user_details.watchlist;
     this.isWatched = data.user_details.already_watched;
+    this.watchingDate = new Date(data.user_details.watching_date);
     this.isFavorite = data.user_details.favorite;
   }
 
@@ -43,6 +44,7 @@ class ModelFilm {
         'personal_rating': this.score,
         'watchlist': this.inWatchList,
         'already_watched': this.isWatched,
+        'watching_date': this.watchingDate.getTime(),
         'favorite': this.isFavorite
       },
       'film_info': {

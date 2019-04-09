@@ -20,8 +20,8 @@ class API {
   getFilms() {
     return this._load({url: `movies`})
       .then(toJSON)
-      .then((ert)=>{
-        return ModelFilm.parseFilms(ert);
+      .then((it)=>{
+        return ModelFilm.parseFilms(it);
       });
   }
 

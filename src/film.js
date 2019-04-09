@@ -16,6 +16,7 @@ class Film extends Component {
     this._comments = Array.from(data.comments);
     this._inWatchList = data.inWatchList;
     this._isWatched = data.isWatched;
+    this._isWatched = data.watchingDate;
     this._isFavorite = data.isFavorite;
 
     this._onDetailsDisplay = null;
@@ -32,7 +33,7 @@ class Film extends Component {
     <p class="film-card__rating">${this._rating}</p>
     <p class="film-card__info">
     <span class="film-card__year">${moment(this._year).format(`YYYY`)}</span>
-    <span class="film-card__duration">${moment.duration(this._duration, `minutes`).format(`h [час] mm [мин]`)}</span>
+    <span class="film-card__duration">${moment.duration(this._duration, `minutes`).format(`h [:] mm`)}</span>
     </br>
     ${this._genre.map((el) => `<span class="film-details__genre">${el}</span>`).join(` `)}
     </p>

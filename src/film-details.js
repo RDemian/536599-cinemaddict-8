@@ -2,9 +2,9 @@ import createDomElement from './create-dom-element';
 import Component from './component.js';
 import moment from 'moment';
 import 'moment-duration-format';
-moment.locale(`ru`);
 
 const KEY_ENTER_CODE = 13;
+const KEY_ESC_CODE = 27;
 class filmDetails extends Component {
   constructor(data) {
     super();
@@ -29,6 +29,7 @@ class filmDetails extends Component {
 
     this._onDetailsClose = null;
     this._onCloseClick = this._onCloseClick.bind(this);
+    this._onEscKeyUp = this._onEscKeyUp.bind(this);
 
     this._onCommentAdd = null;
     this._onCommentKeyDown = this._onCommentKeyDown.bind(this);
@@ -46,6 +47,7 @@ class filmDetails extends Component {
   }
 
   get template() {
+    moment.locale(`en`);
     return `
     <section class="film-details">
       <form class="film-details__inner" action="" method="get">
@@ -91,7 +93,7 @@ class filmDetails extends Component {
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Runtime</td>
-                <td class="film-details__cell"> ${moment.duration(this._duration, `minutes`).format(`mm [мин]`)} </td>
+                <td class="film-details__cell"> ${moment.duration(this._duration, `minutes`).format(`mm [min]`)} </td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Country</td>
@@ -209,6 +211,13 @@ class filmDetails extends Component {
     evt.preventDefault();
     return (typeof this._onDetailsClose === `function`) && this._onDetailsClose();
   }
+  _onEscKeyUp(evt) {
+    if (evt.keyCode === KEY_ESC_CODE) {
+      evt.preventDefault();
+      return (typeof this._onDetailsClose === `function`) && this._onDetailsClose();
+    }
+    return false;
+  }
   /* Добавление в списки фильтрации */
   _onControlClick(evt) {
     const mapper = {
@@ -267,8 +276,7 @@ class filmDetails extends Component {
   bind() {
     this._element.querySelector(`.film-details__close-btn`)
       .addEventListener(`click`, this._onCloseClick);
-    this._element.querySelector(`.film-details__comment-input`)
-      .addEventListener(`keydown`, this._onCommentKeyDown);
+    document.addEventListener(`keyup`, this._onEscKeyUp);
     this._element.querySelectorAll(`.film-details__user-rating-input`).forEach((el) => {
       el.addEventListener(`click`, this._onScoreClick);
     });
@@ -283,6 +291,7 @@ class filmDetails extends Component {
   unbind() {
     this._element.querySelector(`.film-details__close-btn`)
       .removeEventListener(`click`, this._onCloseClick);
+    document.removeEventListener(`keyup`, this._onEscKeyUp);
     this._element.querySelector(`.film-details__comment-input`)
       .removeEventListener(`keydown`, this._onCommentKeyDown);
     this._element.querySelectorAll(`.film-details__user-rating-input`).forEach((el) => {

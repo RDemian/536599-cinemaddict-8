@@ -18,16 +18,15 @@ const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
 const FILMS_STORE_KEY = `films-store-key`;
 const store = new Store({key: FILMS_STORE_KEY, storage: localStorage});
 const provider = new Provider({api, store, generateId: () => String(Date.now())});
-
-window.addEventListener(`offline`, () => {
-  document.title = `${document.title}[OFFLINE]`;
-});
-window.addEventListener(`online`, () => {
-  document.title = document.title.split(`[OFFLINE]`)[0];
-  provider.syncFilms();
-});
-
-/* Даныне для фильтров */
+let currentFilterName = ``;
+let filmArray;
+const filmListContainer = document.querySelector(`.films-list .films-list__container`);
+const filterContainer = document.querySelector(`.main-navigation`);
+const mainContainer = document.body.querySelector(`main`);
+const topRated = document.querySelector(`#top-rated-container`);
+const mostComented = document.querySelector(`#most-commented-container`);
+const profileRatingEl = document.querySelector(`.profile__rating`);
+/* Данные для фильтров */
 const filterDataArray = [
   {
     name: `All movies`,
@@ -59,45 +58,6 @@ const createFilteredArray = (filterName, arr) => {
   const filteredArray = arr.filter(mapper[filterName]);
   return filteredArray;
 };
-/* Подготовка данных для блока статистики */
-const getStaticData = () => {
-  const staticData = {
-    youWatched: 0,
-    duration: 0,
-    chartData: new Map(),
-    topGenre: ``,
-  };
-
-  filmArray.forEach((el) => {
-    if (el.isWatched) {
-      staticData.youWatched += 1;
-      staticData.duration += el.duration;
-
-      let mapKey = el.genre.join(`, `);
-
-      if (staticData.chartData.has(mapKey)) {
-        staticData.chartData.set(mapKey, staticData.chartData.get(mapKey) + 1);
-      } else {
-        staticData.chartData.set(mapKey, 1);
-      }
-    }
-  });
-
-  if (staticData.chartData.size > 0) {
-    staticData.topGenre = Array.from(staticData.chartData.entries());
-    staticData.topGenre = staticData.topGenre.reduce((maxEl, el) => {
-      /* el содержит массив вида ['genre', count] */
-      if (el[1] > maxEl[1]) {
-        maxEl = el;
-      }
-      return maxEl;
-    });
-    staticData.topGenre = staticData.topGenre[0];
-  }
-  return staticData;
-};
-
-let currentFilterName = ``;
 
 const satisfyCurrentFilter = (name) => {
   const mapper = {
@@ -108,7 +68,33 @@ const satisfyCurrentFilter = (name) => {
   };
   return mapper[name] === currentFilterName;
 };
-/* Массив для поиска */
+/* Вычислить звание пользователя */
+const getUserRank = () => {
+  const countWatchFilms = filmArray.reduce((count, el) => {
+    if (el.isWatched) {
+      count += 1;
+    }
+    return count;
+  }, 0);
+  let currentRank = ``;
+  const rank = new Map([
+    [`show adept`, 0],
+    [`novice`, 1],
+    [`fan`, 11],
+    [`movie buff`, 21],
+  ]);
+
+  for (let it of rank) {
+    if (countWatchFilms >= it[1]) {
+      currentRank = it[0];
+    } else {
+      break;
+    }
+  }
+
+  return currentRank;
+};
+/* Массив найденных фильмов */
 const createSearchArray = (searchValue, arr) => {
   const searchArray = arr.filter((el) => {
     return ~el.title.toLowerCase().indexOf(searchValue.toLowerCase());
@@ -116,12 +102,6 @@ const createSearchArray = (searchValue, arr) => {
 
   return searchArray;
 };
-
-/* Основной модуль */
-let filmArray;
-const filmListContainer = document.querySelector(`.films-list .films-list__container`);
-const filterContainer = document.querySelector(`.main-navigation`);
-const mainContainer = document.body.querySelector(`main`);
 
 /* Рендер строки поиска*/
 const renderSearch = () => {
@@ -140,7 +120,7 @@ const renderSearch = () => {
 };
 /* Рендер статистики*/
 const renderStatistic = () => {
-  const statisticInstance = new Statistic(getStaticData());
+  const statisticInstance = new Statistic(filmArray);
   mainContainer.appendChild(statisticInstance.render());
 
   const filmBlock = document.querySelector(`.films`);
@@ -228,6 +208,9 @@ const renderCardArray = (container, arr) => {
         currentData[filterName] = !currentData[filterName];
         filmInstance.update(currentData);
         filmDetailInstance.updateData(currentData);
+        if (filterName === `isWatched`) {
+          profileRatingEl.textContent = getUserRank();
+        }
       };
     };
     /* Добавление в списки фильтрации */
@@ -239,23 +222,33 @@ const renderCardArray = (container, arr) => {
         filmInstance.element.remove();
         filmInstance.unrender();
       }
+      if (filterName === `isWatched`) {
+        profileRatingEl.textContent = getUserRank();
+      }
     };
   }
 };
+
+window.addEventListener(`offline`, () => {
+  document.title = `${document.title}[OFFLINE]`;
+});
+
+window.addEventListener(`online`, () => {
+  document.title = document.title.split(`[OFFLINE]`)[0];
+  provider.syncFilms();
+});
 
 filmListContainer.textContent = `Loading movies...`;
 
 provider.getFilms()
   .then((movies) => {
     filmArray = Array.from(movies);
+    profileRatingEl.textContent = getUserRank();
     filmListContainer.textContent = ``;
     renderCardArray(filmListContainer, movies);
     document.querySelector(`.main-navigation__item--additional`).addEventListener(`click`, renderStatistic);
     document.querySelector(`.header__logo`).after(renderSearch());
     renderFilter(filterContainer, filterDataArray);
-
-    const topRated = document.querySelector(`#top-rated-container`);
-    const mostComented = document.querySelector(`#most-commented-container`);
 
     filmArray.sort((a, b) => a.rating < b.rating ? 1 : -1);
     renderCardArray(topRated, [filmArray[0], filmArray[1]]);
