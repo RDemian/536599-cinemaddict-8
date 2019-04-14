@@ -1,5 +1,6 @@
 import Component from './component';
 import createDomElement from './create-dom-element';
+const INTERVAL_TIME = 200;
 
 class Search extends Component {
   constructor() {
@@ -18,8 +19,11 @@ class Search extends Component {
     `.trim();
   }
 
+  set onFilmSearch(fn) {
+    this._onFilmSearch = fn;
+  }
+
   searchAnimation(time = 2000) {
-    const INTERVAL_TIME = 200;
     const searchCtrl = this._element.querySelector(`.search__field`);
     searchCtrl.setAttribute(`autocomplete`, `off`);
     this._element.style.position = `relative`;
@@ -31,7 +35,7 @@ class Search extends Component {
       left: 5px;
     `;
     searchCtrl.after(divAnim);
-    let intervalId = setInterval(() => {
+    const intervalId = setInterval(() => {
       divAnim.textContent += ` .`;
     }, INTERVAL_TIME);
 
@@ -42,9 +46,6 @@ class Search extends Component {
 
   }
 
-  set onFilmSearch(fn) {
-    this._onFilmSearch = fn;
-  }
   _onSearchInput(evt) {
     evt.preventDefault();
     return (typeof this._onFilmSearch === `function`) && this._onFilmSearch(evt.target.value);

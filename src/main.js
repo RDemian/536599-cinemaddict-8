@@ -3,10 +3,10 @@ import Film from './film.js';
 import Filter from './filter.js';
 import Statistic from './statistic.js';
 import API from './api.js';
-import Store from './store';
-import Provider from './provider';
+import Store from './store.js';
+import Provider from './provider.js';
 import Search from './search.js';
-
+import ArrayIterator from './array-iterator.js';
 
 /* случайное целое число в диапазоне */
 const getRandomInt = (min, max) => {
@@ -14,37 +14,48 @@ const getRandomInt = (min, max) => {
 };
 const END_POINT = `https://es8-demo-srv.appspot.com/moowle`;
 const AUTHORIZATION = `Basic eo0w590ik1111${getRandomInt(1, 9)}a`;
-const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
 const FILMS_STORE_KEY = `films-store-key`;
+const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
 const store = new Store({key: FILMS_STORE_KEY, storage: localStorage});
 const provider = new Provider({api, store, generateId: () => String(Date.now())});
-let currentFilterName = ``;
-let filmArray;
+const filmBlock = document.querySelector(`.films`);
 const filmListContainer = document.querySelector(`.films-list .films-list__container`);
 const filterContainer = document.querySelector(`.main-navigation`);
 const mainContainer = document.body.querySelector(`main`);
 const topRated = document.querySelector(`#top-rated-container`);
 const mostComented = document.querySelector(`#most-commented-container`);
 const profileRatingEl = document.querySelector(`.profile__rating`);
+const footerStatisticsEl = document.querySelector(`.footer__statistics p`);
+const showMoreBtn = document.querySelector(`.films-list__show-more`);
+let statisticBlock;
+let currentFilterName = ``;
+let filmArray;
+let arrayIterator = null;
 /* Данные для фильтров */
-const filterDataArray = [
-  {
-    name: `All movies`,
-    count: 0,
-  },
-  {
-    name: `Watchlist`,
-    count: 0,
-  },
-  {
-    name: `History`,
-    count: 0,
-  },
-  {
-    name: `Favorites`,
-    count: 0,
-  },
+const filterNameArray = [
+  `All movies`,
+  `Watchlist`,
+  `History`,
+  `Favorites`,
 ];
+
+const calculateFilterCount = (filterName) => {
+  if (filterName === `All movies`) {
+    return 0;
+  }
+  return createFilteredArray(filterName, filmArray).length;
+};
+
+const updateFilterCount = (filterName) => {
+  const mapper = {
+    'inWatchList': `Watchlist`,
+    'isWatched': `History`,
+    'isFavorite': `Favorites`,
+  };
+  const filterElement = filterContainer.querySelector(`[href = "#${mapper[filterName].toLowerCase()}"]`);
+  const count = calculateFilterCount(mapper[filterName]);
+  filterElement.innerHTML = `${mapper[filterName]} ${count ? `<span class="main-navigation__item-count">${count}</span>` : ``}`;
+};
 
 const createFilteredArray = (filterName, arr) => {
   filterName = filterName.replace(` `, `-`).toLowerCase();
@@ -64,8 +75,9 @@ const satisfyCurrentFilter = (name) => {
     inWatchList: `Watchlist`,
     isWatched: `History`,
     all: `All movies`,
-    isFavorites: `Favorites`,
+    isFavorite: `Favorites`,
   };
+
   return mapper[name] === currentFilterName;
 };
 /* Вычислить звание пользователя */
@@ -84,7 +96,7 @@ const getUserRank = () => {
     [`movie buff`, 21],
   ]);
 
-  for (let it of rank) {
+  for (const it of rank) {
     if (countWatchFilms >= it[1]) {
       currentRank = it[0];
     } else {
@@ -102,7 +114,6 @@ const createSearchArray = (searchValue, arr) => {
 
   return searchArray;
 };
-
 /* Рендер строки поиска*/
 const renderSearch = () => {
   const searchInstance = new Search();
@@ -113,7 +124,7 @@ const renderSearch = () => {
     clearTimeout(timerId);
     searchInstance.searchAnimation(delayTime);
     timerId = setTimeout(() => {
-      renderCardArray(filmListContainer, createSearchArray(searchValue, filmArray));
+      renderPartialCardArray(filmListContainer, createSearchArray(searchValue, filmArray));
     }, delayTime);
   };
   return domEl;
@@ -122,9 +133,7 @@ const renderSearch = () => {
 const renderStatistic = () => {
   const statisticInstance = new Statistic(filmArray);
   mainContainer.appendChild(statisticInstance.render());
-
-  const filmBlock = document.querySelector(`.films`);
-  const statisticBlock = document.querySelector(`.statistic`);
+  statisticBlock = document.querySelector(`.statistic`);
   if (!filmBlock.classList.contains(`visually-hidden`)) {
     filmBlock.classList.add(`visually-hidden`);
   }
@@ -132,29 +141,27 @@ const renderStatistic = () => {
 };
 /* Рендер фильтров */
 const renderFilter = (container, arr) => {
-  const filmBlock = document.querySelector(`.films`);
-  for (let i = arr.length - 1; i > -1; i -= 1) {
-    const currentFilterData = arr[i];
-    const filterInstance = new Filter(currentFilterData);
+
+  arr.reverse();
+  for (const name of arr) {
+    const filterInstance = new Filter({name, count: calculateFilterCount(name)});
     container.prepend(filterInstance.render());
     filterInstance.onFilter = () => {
-      const filteredArray = createFilteredArray(currentFilterData.name, filmArray);
+      const filteredArray = createFilteredArray(name, filmArray);
       filmBlock.classList.remove(`visually-hidden`);
-      const statisticBlock = document.querySelector(`.statistic`);
+      statisticBlock = document.querySelector(`.statistic`);
       if (statisticBlock) {
         statisticBlock.remove();
       }
-      renderCardArray(filmListContainer, filteredArray);
-      currentFilterName = currentFilterData.name;
+      renderPartialCardArray(filmListContainer, filteredArray);
+      currentFilterName = name;
     };
   }
 };
 /* Рендер карточек фильмов */
 const renderCardArray = (container, arr) => {
-  container.innerHTML = ``;
-
-  for (let i = 0; i < arr.length; i += 1) {
-    const currentData = arr[i];
+  for (const it of arr) {
+    const currentData = it;
     const filmInstance = new Film(currentData);
     const filmDetailInstance = new FilmDetails(currentData);
 
@@ -162,6 +169,10 @@ const renderCardArray = (container, arr) => {
 
     /* При Клике по комментариям выполняется функция ниже */
     filmInstance.onDetailsDisplay = () => {
+      const prevPopup = document.body.querySelector(`.film-details`);
+      if (prevPopup) {
+        prevPopup.remove();
+      }
       document.body.appendChild(filmDetailInstance.render());
       filmDetailInstance.onDetailsClose = () => {
         document.body.removeChild(filmDetailInstance.element);
@@ -206,8 +217,13 @@ const renderCardArray = (container, arr) => {
       };
       filmDetailInstance.onAddToFilterList = (filterName) => {
         currentData[filterName] = !currentData[filterName];
+        updateFilterCount(filterName);
         filmInstance.update(currentData);
         filmDetailInstance.updateData(currentData);
+        if (satisfyCurrentFilter(filterName) && !currentData[filterName]) {
+          filmInstance.element.remove();
+          filmInstance.unrender();
+        }
         if (filterName === `isWatched`) {
           profileRatingEl.textContent = getUserRank();
         }
@@ -216,6 +232,7 @@ const renderCardArray = (container, arr) => {
     /* Добавление в списки фильтрации */
     filmInstance.onAddToFilterList = (filterName) => {
       currentData[filterName] = !currentData[filterName];
+      updateFilterCount(filterName);
       filmInstance.update(currentData);
       filmDetailInstance.updateData(currentData);
       if (satisfyCurrentFilter(filterName) && !currentData[filterName]) {
@@ -224,6 +241,33 @@ const renderCardArray = (container, arr) => {
       }
       if (filterName === `isWatched`) {
         profileRatingEl.textContent = getUserRank();
+      }
+    };
+  }
+};
+/* Рендер части карточек фильмов */
+const renderPartialCardArray = (container, arr) => {
+  container.innerHTML = ``;
+  if (showMoreBtn.classList.contains(`visually-hidden`)) {
+    showMoreBtn.classList.remove(`visually-hidden`);
+  }
+  if (arrayIterator) {
+    arrayIterator.unbind();
+  }
+  arrayIterator = new ArrayIterator({array: arr, activateElem: showMoreBtn});
+  renderCardArray(container, arrayIterator.next());
+  if (arrayIterator.done) {
+    showMoreBtn.classList.add(`visually-hidden`);
+    arrayIterator.unbind();
+    arrayIterator = null;
+  } else {
+    arrayIterator.bind();
+    arrayIterator.displayNext = () => {
+      renderCardArray(container, arrayIterator.next());
+      if (arrayIterator.done) {
+        showMoreBtn.classList.add(`visually-hidden`);
+        arrayIterator.unbind();
+        arrayIterator = null;
       }
     };
   }
@@ -244,17 +288,17 @@ provider.getFilms()
   .then((movies) => {
     filmArray = Array.from(movies);
     profileRatingEl.textContent = getUserRank();
+    footerStatisticsEl.textContent = `${filmArray.length} movies inside`;
     filmListContainer.textContent = ``;
-    renderCardArray(filmListContainer, movies);
+    renderPartialCardArray(filmListContainer, filmArray);
     document.querySelector(`.main-navigation__item--additional`).addEventListener(`click`, renderStatistic);
     document.querySelector(`.header__logo`).after(renderSearch());
-    renderFilter(filterContainer, filterDataArray);
+    renderFilter(filterContainer, filterNameArray);
 
     filmArray.sort((a, b) => a.rating < b.rating ? 1 : -1);
     renderCardArray(topRated, [filmArray[0], filmArray[1]]);
     filmArray.sort((a, b) => a.comments.length < b.comments.length ? 1 : -1);
     renderCardArray(mostComented, [filmArray[0], filmArray[1]]);
-
   })
   .catch(() => {
     filmListContainer.textContent = `Something went wrong while loading movies. Check your connection or try again later`;

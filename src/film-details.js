@@ -5,6 +5,7 @@ import 'moment-duration-format';
 
 const KEY_ENTER_CODE = 13;
 const KEY_ESC_CODE = 27;
+const ANIMATION_TIMEOUT = 600;
 class filmDetails extends Component {
   constructor(data) {
     super();
@@ -164,9 +165,9 @@ class filmDetails extends Component {
         </section>
 
         <section class="film-details__user-rating-wrap">
-          <div class="film-details__user-rating-controls">
+          <div class="film-details__user-rating-controls visually-hidden">
             <span class="film-details__watched-status film-details__watched-status--active"></span>
-            <button class="film-details__watched-reset visually-hidden" type="button">undo</button>
+            <button class="film-details__watched-reset" type="button">undo</button>
           </div>
 
           <div class="film-details__user-score">
@@ -205,6 +206,86 @@ class filmDetails extends Component {
   }
   set onScoreChange(fn) {
     this._onScoreChange = fn;
+  }
+
+  updateData(data) {
+    this._title = data.title;
+    this._rating = data.rating;
+    this._year = data.year;
+    this._duration = data.duration;
+    this._genre = data.genre;
+    this._poster = data.poster;
+    this._description = data.description;
+    this._comments = Array.from(data.comments);
+
+    this._age = data.age;
+    this._original = data.original;
+    this._score = data.score;
+    this._inWatchList = data.inWatchList;
+    this._isWatched = data.isWatched;
+    this._isFavorite = data.isFavorite;
+  }
+
+  commentsUpdate(newComments = null) {
+    if (newComments) {
+      this._comments = Array.from(newComments);
+      const commentsWrap = this._element.querySelector(`.film-details__comments-wrap`);
+      let newDomElement = createDomElement(this.template);
+      newDomElement = newDomElement.querySelector(`.film-details__comments-list`);
+      commentsWrap.replaceChild(newDomElement, this._element.querySelector(`.film-details__comments-list`));
+      this._element.querySelector(`.film-details__comments-count`).textContent = this._comments.length;
+    }
+    const commentCtrl = this._element.querySelector(`.film-details__comment-input`);
+    commentCtrl.value = ``;
+    this.unblock(commentCtrl);
+    this._element.querySelector(`.film-details__add-emoji-label`).textContent = `😐`;
+    this._element.querySelector(`#emoji-neutral-face`).checked = true;
+  }
+
+  displayUndoBtn() {
+    const userRatingCtrl = this._element.querySelector(`.film-details__user-rating-controls`);
+    const undoBtn = this._element.querySelector(`.film-details__watched-reset`);
+    const watchStatus = this._element.querySelector(`.film-details__watched-status`);
+    watchStatus.textContent = `Comment added`;
+    userRatingCtrl.classList.remove(`visually-hidden`);
+    undoBtn.classList.remove(`visually-hidden`);
+    undoBtn.addEventListener(`click`, this._onUndoBtnClick);
+  }
+
+  hideUndoBtn() {
+    const undoBtn = this._element.querySelector(`.film-details__watched-reset`);
+    const watchStatus = this._element.querySelector(`.film-details__watched-status`);
+    watchStatus.textContent = `Comment deleted`;
+    undoBtn.classList.add(`visually-hidden`);
+    undoBtn.removeEventListener(`click`, this._onUndoBtnClick);
+  }
+
+  scoreUpdate(newScore = null) {
+    if (newScore) {
+      this._rating = newScore.rating;
+      this._score = newScore.score;
+      this._element.querySelector(`.film-details__total-rating`).textContent = this._rating;
+      this._element.querySelector(`.film-details__user-rating`).textContent = `Your rate ${this._score}`;
+    }
+    this.unblock(this._element.querySelector(`.film-details__user-rating-score`));
+  }
+
+  addErrorStyle(errorElement) {
+    errorElement.style.border = `1px solid red`;
+    this._element.style.animation = `shake ${ANIMATION_TIMEOUT / 1000}s`;
+
+    setTimeout(() => {
+      this._element.style.animation = ``;
+    }, ANIMATION_TIMEOUT);
+  }
+
+  block(elem) {
+    elem.disabled = true;
+    elem.style = `border: none;`;
+  }
+
+  unblock(elem) {
+    elem.disabled = false;
   }
   /* Закрытие попапа */
   _onCloseClick(evt) {
@@ -253,13 +334,13 @@ class filmDetails extends Component {
   }
   /* Изменение оценки */
   _onScoreClick() {
-    let formData = new FormData(this._element.querySelector(`.film-details__inner`));
-    let errorElement = this._element.querySelector(`.film-details__user-rating-score`);
+    const formData = new FormData(this._element.querySelector(`.film-details__inner`));
+    const errorElement = this._element.querySelector(`.film-details__user-rating-score`);
     this.block(errorElement);
     for (const pair of formData.entries()) {
       const [property, value] = pair;
       if (property === `score`) {
-        let newData = {
+        const newData = {
           score: value,
           rating: this._rating > value ? Math.round((this._rating - value / 10) * 10) / 10 : Math.round((this._rating + value / 10) * 10) / 10,
         };
@@ -277,6 +358,8 @@ class filmDetails extends Component {
     this._element.querySelector(`.film-details__close-btn`)
       .addEventListener(`click`, this._onCloseClick);
     document.addEventListener(`keyup`, this._onEscKeyUp);
+    this._element.querySelector(`.film-details__comment-input`)
+      .addEventListener(`keydown`, this._onCommentKeyDown);
     this._element.querySelectorAll(`.film-details__user-rating-input`).forEach((el) => {
       el.addEventListener(`click`, this._onScoreClick);
     });
@@ -303,85 +386,6 @@ class filmDetails extends Component {
     this._element.querySelectorAll(`.film-details__control-input`).forEach((el) => {
       el.removeEventListener(`change`, this._onControlClick);
     });
-  }
-
-  updateData(data) {
-    this._title = data.title;
-    this._rating = data.rating;
-    this._year = data.year;
-    this._duration = data.duration;
-    this._genre = data.genre;
-    this._poster = data.poster;
-    this._description = data.description;
-    this._comments = Array.from(data.comments);
-
-    this._age = data.age;
-    this._original = data.original;
-    this._score = data.score;
-    this._inWatchList = data.inWatchList;
-    this._isWatched = data.isWatched;
-    this._isFavorite = data.isFavorite;
-  }
-
-  commentsUpdate(newComments = null) {
-    if (newComments) {
-      this._comments = Array.from(newComments);
-      const commentsWrap = this._element.querySelector(`.film-details__comments-wrap`);
-      let newDomElement = createDomElement(this.template);
-      newDomElement = newDomElement.querySelector(`.film-details__comments-list`);
-      commentsWrap.replaceChild(newDomElement, this._element.querySelector(`.film-details__comments-list`));
-      this._element.querySelector(`.film-details__comments-count`).textContent = this._comments.length;
-    }
-    let commentCtrl = this._element.querySelector(`.film-details__comment-input`);
-    commentCtrl.value = ``;
-    this.unblock(commentCtrl);
-    this._element.querySelector(`.film-details__add-emoji-label`).textContent = `😐`;
-    this._element.querySelector(`#emoji-neutral-face`).checked = true;
-  }
-
-  displayUndoBtn() {
-    const undoBtn = this._element.querySelector(`.film-details__watched-reset`);
-    const watchStatus = this._element.querySelector(`.film-details__watched-status`);
-    watchStatus.textContent = `Comment added`;
-    undoBtn.classList.remove(`visually-hidden`);
-    undoBtn.addEventListener(`click`, this._onUndoBtnClick);
-  }
-
-  hideUndoBtn() {
-    const undoBtn = this._element.querySelector(`.film-details__watched-reset`);
-    const watchStatus = this._element.querySelector(`.film-details__watched-status`);
-    watchStatus.textContent = `Comment deleted`;
-    undoBtn.classList.add(`visually-hidden`);
-    undoBtn.removeEventListener(`click`, this._onUndoBtnClick);
-  }
-
-  scoreUpdate(newScore = null) {
-    if (newScore) {
-      this._rating = newScore.rating;
-      this._score = newScore.score;
-      this._element.querySelector(`.film-details__total-rating`).textContent = this._rating;
-      this._element.querySelector(`.film-details__user-rating`).textContent = `Your rate ${this._score}`;
-    }
-    this.unblock(this._element.querySelector(`.film-details__user-rating-score`));
-  }
-
-  addErrorStyle(errorElement) {
-    errorElement.style.border = `1px solid red`;
-    const ANIMATION_TIMEOUT = 600;
-    this._element.style.animation = `shake ${ANIMATION_TIMEOUT / 1000}s`;
-
-    setTimeout(() => {
-      this._element.style.animation = ``;
-    }, ANIMATION_TIMEOUT);
-  }
-
-  block(elem) {
-    elem.disabled = true;
-    elem.style = `border: none;`;
-  }
-
-  unblock(elem) {
-    elem.disabled = false;
   }
 
   static convertCommentData(formData) {

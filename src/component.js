@@ -16,10 +16,6 @@ class Component {
     throw new Error(`You have to define template.`);
   }
 
-  bind() {}
-
-  unbind() {}
-
   render() {
     this._element = createDomElement(this.template);
     this.bind();
@@ -34,6 +30,10 @@ class Component {
   }
 
   update() {}
+
+  bind() {}
+
+  unbind() {}
 }
 
 export default Component;

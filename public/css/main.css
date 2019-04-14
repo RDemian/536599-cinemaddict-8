@@ -321,7 +321,9 @@ a:hover {
   height: 50px;
 }
 
-
+.films-list--extra .film-card:hover .film-card__poster {
+  bottom: calc(100% - 340px - 50px);
+}
 
 .films-list__show-more {
   background: none;

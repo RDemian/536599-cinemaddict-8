@@ -4,6 +4,7 @@ import moment from 'moment';
 import 'moment-duration-format';
 import Chart from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+const BAR_HEIGHT = 50;
 class Statistic extends Component {
   constructor(filmArray) {
     super();
@@ -20,7 +21,7 @@ class Statistic extends Component {
   get template() {
     return `
     <section class="statistic visually-hidden">
-      <p class="statistic__rank">Your rank <span class="statistic__rank-label">Sci-Fighter</span></p>
+      <p class="statistic__rank">Your rank <span class="statistic__rank-label">${this._getYouRank()}</span></p>
     
       <form action="https://echo.htmlacademy.ru/" method="get" class="statistic__filters">
         <p class="statistic__filters-description">Show stats:</p>
@@ -64,11 +65,31 @@ class Statistic extends Component {
     </section>`.trim();
   }
 
+  _getYouRank() {
+    const countWatchFilms = this._youWatched;
+    let currentRank = ``;
+    const rank = new Map([
+      [`show adept`, 0],
+      [`novice`, 1],
+      [`fan`, 11],
+      [`movie buff`, 21],
+    ]);
+
+    for (const it of rank) {
+      if (countWatchFilms >= it[1]) {
+        currentRank = it[0];
+      } else {
+        break;
+      }
+    }
+
+    return currentRank;
+  }
+
   _initChart() {
     // Обязательно рассчитайте высоту canvas, она зависит от количества элементов диаграммы
     const statisticCtx = this._element.querySelector(`.statistic__chart`);
 
-    const BAR_HEIGHT = 50;
     statisticCtx.height = BAR_HEIGHT * this._chartData.size;
     const myChart = new Chart(statisticCtx, {
       plugins: [ChartDataLabels],
@@ -143,7 +164,7 @@ class Statistic extends Component {
         staticData.youWatched += 1;
         staticData.duration += el.duration;
 
-        let mapKey = el.genre.join(`, `);
+        const mapKey = el.genre.join(`, `);
 
         if (staticData.chartData.has(mapKey)) {
           staticData.chartData.set(mapKey, staticData.chartData.get(mapKey) + 1);

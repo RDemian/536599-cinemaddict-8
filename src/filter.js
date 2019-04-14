@@ -1,10 +1,10 @@
 import Component from './component.js';
 
 class Filter extends Component {
-  constructor(data) {
+  constructor({name, count}) {
     super();
-    this._name = data.name;
-    this._count = data.count;
+    this._name = name;
+    this._count = count;
 
     this._onFilter = null;
     this._onFilterClick = this._onFilterClick.bind(this);
