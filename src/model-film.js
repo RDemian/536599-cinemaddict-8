@@ -71,10 +71,9 @@ class ModelFilm {
   }
 
   static parseFilms(data) {
-    const arr = data.map((el) => {
+    return data.map((el) => {
       return ModelFilm.parseFilm(el);
     });
-    return arr;
   }
 }
 

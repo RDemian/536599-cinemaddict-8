@@ -90,7 +90,7 @@ class filmDetails extends Component {
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Release Date</td>
-                <td class="film-details__cell">${moment(this._year).format(`DD MMMM YYYY`)} (${this._country})</td>
+                <td class="film-details__cell">${moment(this._year).format(`DD MMMM YYYY`)}</td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Runtime</td>
@@ -227,6 +227,7 @@ class filmDetails extends Component {
   }
 
   commentsUpdate(newComments = null) {
+    const commentCtrl = this._element.querySelector(`.film-details__comment-input`);
     if (newComments) {
       this._comments = Array.from(newComments);
       const commentsWrap = this._element.querySelector(`.film-details__comments-wrap`);
@@ -234,12 +235,11 @@ class filmDetails extends Component {
       newDomElement = newDomElement.querySelector(`.film-details__comments-list`);
       commentsWrap.replaceChild(newDomElement, this._element.querySelector(`.film-details__comments-list`));
       this._element.querySelector(`.film-details__comments-count`).textContent = this._comments.length;
+      this._element.querySelector(`.film-details__add-emoji-label`).textContent = `😐`;
+      this._element.querySelector(`#emoji-neutral-face`).checked = true;
+      commentCtrl.value = ``;
     }
-    const commentCtrl = this._element.querySelector(`.film-details__comment-input`);
-    commentCtrl.value = ``;
     this.unblock(commentCtrl);
-    this._element.querySelector(`.film-details__add-emoji-label`).textContent = `😐`;
-    this._element.querySelector(`#emoji-neutral-face`).checked = true;
   }
 
   displayUndoBtn() {

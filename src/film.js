@@ -2,7 +2,7 @@ import createDomElement from './create-dom-element';
 import Component from './component.js';
 import moment from 'moment';
 import 'moment-duration-format';
-const descriptionMaxLength = 140;
+const DESCRIPTION_MAX_LENGTH = 140;
 class Film extends Component {
   constructor(data) {
     super();
@@ -38,7 +38,7 @@ class Film extends Component {
     ${this._genre.map((el) => `<span class="film-details__genre">${el}</span>`).join(` `)}
     </p>
     <img src="${this._poster}" alt="" class="film-card__poster">
-    <p class="film-card__description">${this._description.substring(0, descriptionMaxLength)}</p>
+    <p class="film-card__description">${this._description.substring(0, DESCRIPTION_MAX_LENGTH)}</p>
     <button class="film-card__comments">${this._comments.length} comments</button>
 
     <form class="film-card__controls">

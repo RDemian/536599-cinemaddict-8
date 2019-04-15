@@ -4,6 +4,7 @@ import moment from 'moment';
 import 'moment-duration-format';
 import Chart from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import getUserRank from './get-user-rank.js';
 const BAR_HEIGHT = 50;
 class Statistic extends Component {
   constructor(filmArray) {
@@ -21,7 +22,7 @@ class Statistic extends Component {
   get template() {
     return `
     <section class="statistic visually-hidden">
-      <p class="statistic__rank">Your rank <span class="statistic__rank-label">${this._getYouRank()}</span></p>
+      <p class="statistic__rank">Your rank <span class="statistic__rank-label">${getUserRank(this._youWatched)}</span></p>
     
       <form action="https://echo.htmlacademy.ru/" method="get" class="statistic__filters">
         <p class="statistic__filters-description">Show stats:</p>
@@ -65,33 +66,13 @@ class Statistic extends Component {
     </section>`.trim();
   }
 
-  _getYouRank() {
-    const countWatchFilms = this._youWatched;
-    let currentRank = ``;
-    const rank = new Map([
-      [`show adept`, 0],
-      [`novice`, 1],
-      [`fan`, 11],
-      [`movie buff`, 21],
-    ]);
-
-    for (const it of rank) {
-      if (countWatchFilms >= it[1]) {
-        currentRank = it[0];
-      } else {
-        break;
-      }
-    }
-
-    return currentRank;
-  }
-
   _initChart() {
     // Обязательно рассчитайте высоту canvas, она зависит от количества элементов диаграммы
     const statisticCtx = this._element.querySelector(`.statistic__chart`);
 
     statisticCtx.height = BAR_HEIGHT * this._chartData.size;
-    const myChart = new Chart(statisticCtx, {
+
+    return new Chart(statisticCtx, {
       plugins: [ChartDataLabels],
       type: `horizontalBar`,
       data: {
@@ -147,11 +128,9 @@ class Statistic extends Component {
         }
       }
     });
-
-    return myChart;
   }
   /* Подготовка данных для блока статистики */
-  _getStaticData(arr) {
+  _getStaticData(array) {
     const staticData = {
       youWatched: 0,
       duration: 0,
@@ -159,17 +138,16 @@ class Statistic extends Component {
       topGenre: ``,
     };
 
-    arr.forEach((el) => {
+    array.forEach((el) => {
       if (el.isWatched) {
         staticData.youWatched += 1;
         staticData.duration += el.duration;
-
-        const mapKey = el.genre.join(`, `);
-
-        if (staticData.chartData.has(mapKey)) {
-          staticData.chartData.set(mapKey, staticData.chartData.get(mapKey) + 1);
-        } else {
-          staticData.chartData.set(mapKey, 1);
+        for (const mapKey of el.genre) {
+          if (staticData.chartData.has(mapKey)) {
+            staticData.chartData.set(mapKey, staticData.chartData.get(mapKey) + 1);
+          } else {
+            staticData.chartData.set(mapKey, 1);
+          }
         }
       }
     });
@@ -233,9 +211,9 @@ class Statistic extends Component {
   _onFilterChange(evt) {
     evt.preventDefault();
     const filterName = evt.target.value;
-    const filterArr = this._getFilterArray(filterName);
-    this._getStaticData(filterArr);
-    this._myChart = null;
+    const filterArray = this._getFilterArray(filterName);
+    this._getStaticData(filterArray);
+    this._myChart.destroy();
     this._myChart = this._initChart();
     this._updateTextList();
   }

@@ -6,7 +6,7 @@ class ArrayIterator {
     this._done = false;
     this._activateElem = activateElem;
 
-    this._displayNext = null;
+    this._onDisplayNext = null;
     this._onShowMoreBtnClick = this._onShowMoreBtnClick.bind(this);
   }
 
@@ -14,11 +14,11 @@ class ArrayIterator {
     return this._done;
   }
 
-  set displayNext(fn) {
-    this._displayNext = fn;
+  set onDisplayNext(fn) {
+    this._onDisplayNext = fn;
   }
 
-  next() {
+  getNextPart() {
     this._marker += this._partSize;
     if (this._marker >= this._array.length) {
       this._done = true;
@@ -29,7 +29,7 @@ class ArrayIterator {
 
   _onShowMoreBtnClick(evt) {
     evt.preventDefault();
-    return (typeof this._displayNext === `function`) && this._displayNext();
+    return (typeof this._onDisplayNext === `function`) && this._onDisplayNext();
   }
 
   bind() {
