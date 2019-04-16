@@ -127,80 +127,95 @@ const renderFilter = (container, array) => {
   }
 };
 
+const createAddToFilterListHandler = (currentData, filmInstance, filmDetailInstance) => {
+  return (filterName) => {
+    currentData[filterName] = !currentData[filterName];
+    updateFilterCount(filterName);
+    filmInstance.update(currentData);
+    filmDetailInstance.updateData(currentData);
+    if (satisfyCurrentFilter(filterName) && !currentData[filterName]) {
+      filmInstance.element.remove();
+      filmInstance.unrender();
+    }
+    if (filterName === `isWatched`) {
+      profileRatingEl.textContent = getUserRank(filmArray);
+    }
+  };
+};
+
+const createFilmDetailsDisplayHandler = (currentData, filmInstance, filmDetailInstance) => {
+  return () => {
+    const addToFilterListHandler = createAddToFilterListHandler(currentData, filmInstance, filmDetailInstance);
+    const prevPopup = document.body.querySelector(`.film-details`);
+
+    if (prevPopup) {
+      prevPopup.remove();
+    }
+
+    document.body.appendChild(filmDetailInstance.render());
+
+    filmDetailInstance.onAddToFilterList = addToFilterListHandler;
+
+    filmDetailInstance.onDetailsClose = () => {
+      document.body.removeChild(filmDetailInstance.element);
+      filmDetailInstance.unrender();
+    };
+
+    filmDetailInstance.onCommentAdd = (newComment, errorElement) => {
+      currentData.comments.push(newComment);
+      provider.updateFilm({id: currentData.id, data: currentData.toRAW()})
+        .then((newFilm) => {
+          filmDetailInstance.commentsUpdate(currentData.comments);
+          filmDetailInstance.displayUndoBtn();
+          filmInstance.update(newFilm);
+        })
+        .catch(() => {
+          filmDetailInstance.addErrorStyle(errorElement);
+          filmDetailInstance.commentsUpdate();
+        });
+    };
+
+    filmDetailInstance.onCommentRemove = (errorElement) => {
+      currentData.comments.pop();
+      provider.updateFilm({id: currentData.id, data: currentData.toRAW()})
+        .then((newFilm) => {
+          filmDetailInstance.commentsUpdate(currentData.comments);
+          filmDetailInstance.hideUndoBtn();
+          filmInstance.update(newFilm);
+        })
+        .catch(() => {
+          filmDetailInstance.addErrorStyle(errorElement);
+        });
+    };
+
+    filmDetailInstance.onScoreChange = (newData, errorElement) => {
+      Object.assign(currentData, newData);
+      provider.updateFilm({id: currentData.id, data: currentData.toRAW()})
+        .then(() => {
+          filmInstance.update(currentData);
+          filmDetailInstance.scoreUpdate(newData);
+        })
+        .catch(() => {
+          filmDetailInstance.addErrorStyle(errorElement);
+          filmDetailInstance.scoreUpdate();
+        });
+    };
+  };
+};
 /* Рендер карточек фильмов */
 const renderCardArray = (container, array) => {
   for (const it of array) {
     const currentData = it;
     const filmInstance = new Film(currentData);
     const filmDetailInstance = new FilmDetails(currentData);
-    const addToFilterList = (filterName) => {
-      currentData[filterName] = !currentData[filterName];
-      updateFilterCount(filterName);
-      filmInstance.update(currentData);
-      filmDetailInstance.updateData(currentData);
-      if (satisfyCurrentFilter(filterName) && !currentData[filterName]) {
-        filmInstance.element.remove();
-        filmInstance.unrender();
-      }
-      if (filterName === `isWatched`) {
-        profileRatingEl.textContent = getUserRank(filmArray);
-      }
-    };
+    const addToFilterListHandler = createAddToFilterListHandler(currentData, filmInstance, filmDetailInstance);
+    const filmDetailsDisplayHandler = createFilmDetailsDisplayHandler(currentData, filmInstance, filmDetailInstance);
 
     container.appendChild(filmInstance.render());
-
-    /* При Клике по комментариям выполняется функция ниже */
-    filmInstance.onDetailsDisplay = () => {
-      const prevPopup = document.body.querySelector(`.film-details`);
-      if (prevPopup) {
-        prevPopup.remove();
-      }
-      document.body.appendChild(filmDetailInstance.render());
-      filmDetailInstance.onDetailsClose = () => {
-        document.body.removeChild(filmDetailInstance.element);
-        filmDetailInstance.unrender();
-      };
-      filmDetailInstance.onCommentAdd = (newComment, errorElement) => {
-        currentData.comments.push(newComment);
-        provider.updateFilm({id: currentData.id, data: currentData.toRAW()})
-          .then((newFilm) => {
-            filmDetailInstance.commentsUpdate(currentData.comments);
-            filmDetailInstance.displayUndoBtn();
-            filmInstance.update(newFilm);
-          })
-          .catch(() => {
-            filmDetailInstance.addErrorStyle(errorElement);
-            filmDetailInstance.commentsUpdate();
-          });
-      };
-      filmDetailInstance.onCommentRemove = (errorElement) => {
-        currentData.comments.pop();
-        provider.updateFilm({id: currentData.id, data: currentData.toRAW()})
-          .then((newFilm) => {
-            filmDetailInstance.commentsUpdate(currentData.comments);
-            filmDetailInstance.hideUndoBtn();
-            filmInstance.update(newFilm);
-          })
-          .catch(() => {
-            filmDetailInstance.addErrorStyle(errorElement);
-          });
-      };
-      filmDetailInstance.onScoreChange = (newData, errorElement) => {
-        Object.assign(currentData, newData);
-        provider.updateFilm({id: currentData.id, data: currentData.toRAW()})
-          .then(() => {
-            filmInstance.update(currentData);
-            filmDetailInstance.scoreUpdate(newData);
-          })
-          .catch(() => {
-            filmDetailInstance.addErrorStyle(errorElement);
-            filmDetailInstance.scoreUpdate();
-          });
-      };
-      filmDetailInstance.onAddToFilterList = addToFilterList;
-    };
     /* Добавление в списки фильтрации */
-    filmInstance.onAddToFilterList = addToFilterList;
+    filmInstance.onAddToFilterList = addToFilterListHandler;
+    /* При Клике по комментариям открывается детальная карточка */
+    filmInstance.onDetailsDisplay = filmDetailsDisplayHandler;
   }
 };
 /* Рендер части карточек фильмов */

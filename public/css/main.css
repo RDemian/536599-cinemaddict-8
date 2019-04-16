@@ -683,7 +683,7 @@ a:hover {
 }
 .film-details__emoji-list {
   position: absolute;
-  bottom: -40px;
+  bottom: -22px;
   display: none;
 }
 .film-details__user-rating-wrap {
